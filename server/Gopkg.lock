@@ -2,6 +2,12 @@
 
 
 [[projects]]
+  name = "github.com/shirou/gopsutil"
+  packages = ["."]
+  revision = "c432be29ccce470088d07eea25b3ea7e68a8afbb"
+  version = "v2.18.01"
+
+[[projects]]
   name = "github.com/sirupsen/logrus"
   packages = ["."]
   revision = "d682213848ed68c0a260ca37d6dd5ace8423f5ba"
@@ -22,12 +28,15 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
-  packages = ["unix","windows"]
+  packages = [
+    "unix",
+    "windows"
+  ]
   revision = "37707fdb30a5b38865cfb95e5aab41707daec7fd"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "5a42b590f0e9199c9f0f70040f004314ca2377f6a08e4d2589713bb9f6418105"
+  inputs-digest = "47108ca01b9d0e1f7584486f830ebd9fefb15dbf2920249898e7f267720e57d2"
   solver-name = "gps-cdcl"
   solver-version = 1

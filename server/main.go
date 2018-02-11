@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/lnquy/nights-watch/server/watcher/cpu"
 	"github.com/sirupsen/logrus"
 	"github.com/tarm/serial"
 )
@@ -24,13 +25,16 @@ func main() {
 	}
 	time.Sleep(2 * time.Second) // Sleep since Arduino will restart when new connection connected
 
+	cw := cpu.NewWatcher()
 	logrus.Infof("Write to Arduino")
 	for i := 0; i < 100; i++ {
-		_, err = s.Write([]byte(fmt.Sprintf("%d.", i)))
+		cs := cw.GetStats()
+		p := cs.Load * 100.0
+		_, err = s.Write([]byte(fmt.Sprintf("%.2f", p)))
 		if err != nil {
 			logrus.Fatal(err)
 		}
-		logrus.Infof("Wrote: %d", i)
+		logrus.Infof("Wrote: %.2f", p)
 		time.Sleep(1 * time.Second)
 	}
 
