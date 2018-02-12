@@ -1,4 +1,4 @@
-package cpu
+package mem
 
 import (
 	"context"
@@ -11,8 +11,8 @@ type (
 	}
 
 	Stats struct {
-		Load float64
-		Temp float64
+		Load  float64
+		Usage uint64
 	}
 
 	watcher struct{}

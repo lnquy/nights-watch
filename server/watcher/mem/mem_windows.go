@@ -1,11 +1,10 @@
-package cpu
+package mem
 
 import (
 	"context"
 	"time"
 
-	"github.com/lnquy/nights-watch/server/watcher/util"
-	pscpu "github.com/shirou/gopsutil/cpu"
+	psmem "github.com/shirou/gopsutil/mem"
 )
 
 func (w *watcher) GetStats(ctx context.Context, interval time.Duration) <-chan *Stats {
@@ -16,12 +15,13 @@ func (w *watcher) GetStats(ctx context.Context, interval time.Duration) <-chan *
 	for {
 		select {
 		case <-ticker.C:
-			percs, err := pscpu.Percent(time.Second, true)
+			vm, err := psmem.VirtualMemory()
 			if err != nil {
 				statsChan <- stats
 				continue
 			}
-			stats.Load = util.GetAverage(percs) * 100.0
+			stats.Load = vm.UsedPercent
+			stats.Usage = vm.Used
 			statsChan <- stats
 		case <-ctx.Done():
 			ticker.Stop()

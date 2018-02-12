@@ -16,16 +16,16 @@ void setup() {
 void loop() {
   while (Serial.available()) {
     char inChar = (char)Serial.read();
-    if (inChar == '.'){
+    if (inChar == '$'){
       outputToLCD(inputString);
-      inputString ="";
+      inputString = "";
     } else {
         inputString += inChar;
     }
   }
 }
 
-void outputToLCD(String input){
+void outputToLCD(String input) {
   myNextion.setComponentText("cpu0", String(input) + "%");
   myNextion.setComponentText("cpu1", String(input) + "*C");
   myNextion.setComponentText("ram0", String(input) + "%");
