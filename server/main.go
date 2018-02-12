@@ -60,6 +60,7 @@ func main() {
 // 2: Memory stats
 // 3: GPU stats
 // 4: Network stats
+// z: Alert
 func watchStats(ctx context.Context, serialPort *serial.Port, interval time.Duration) {
 	cw := cpu.NewWatcher().GetStats(ctx, interval)
 	mw := mem.NewWatcher().GetStats(ctx, interval)
@@ -79,8 +80,13 @@ func watchStats(ctx context.Context, serialPort *serial.Port, interval time.Dura
 			if _, err := serialPort.Write([]byte(cmd)); err != nil {
 				logrus.Errorf("Failed to write MEM stats to Arduino: %s", cmd)
 			}
+
+			// TODO
+			if _, err := serialPort.Write([]byte(fmt.Sprintf("z|MEM"))); err != nil {
+				logrus.Errorf("Failed to write MEM alert to Arduino: %s", cmd)
+			}
 		case s := <-nw:
-			cmd := fmt.Sprintf("4|%d|%d$", s.Upload, s.Download)
+			cmd := fmt.Sprintf("4|%d/%d$", s.Upload, s.Download)
 			logrus.Debugf("NET: %s", cmd)
 			if _, err := serialPort.Write([]byte(cmd)); err != nil {
 				logrus.Errorf("Failed to write NET stats to Arduino: %s", cmd)

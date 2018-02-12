@@ -45,11 +45,10 @@ void outputToLCD(String input) {
     // GPU
   } else if (cmd == "4") {
     // NET
-    String up = getValue(input, '|', 1);
-    String down = getValue(input, '|', 2);
-    // TODO
-    myNextion.setComponentText("gpu0", String(up) + "KB/s");
-    myNextion.setComponentText("gpu1", String(down) + "KB/s");
+    String net = getValue(input, '|', 1);
+    myNextion.setComponentText("net0", String(net) + "KBps");
+  } else if (cmd == "z") { // Alert
+    myNextion.sendCommand("page0.alert.bco=57798");
   }
 }
 
