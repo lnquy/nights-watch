@@ -64,13 +64,13 @@ func watchStats(ctx context.Context, serialPort *serial.Port, interval time.Dura
 	for {
 		select {
 		case s := <-cw:
-			msg := fmt.Sprintf("1|%.2f|%.2f$", s.Load, s.Temp)
+			msg := fmt.Sprintf("1|%.0f|%.0f$", s.Load, s.Temp)
 			logrus.Debugf("CPU: %s", msg)
 			if _, err := serialPort.Write([]byte(msg)); err != nil {
 				logrus.Errorf("Failed to write CPU stats to Arduino: %s", msg)
 			}
 		case s := <-cm:
-			msg := fmt.Sprintf("2|%.2f|%d$", s.Load, s.Usage)
+			msg := fmt.Sprintf("2|%.0f|%d$", s.Load, s.Usage)
 			logrus.Debugf("MEM: %s", msg)
 			if _, err := serialPort.Write([]byte(msg)); err != nil {
 				logrus.Errorf("Failed to write CPU stats to Arduino: %s", msg)
