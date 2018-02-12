@@ -11,6 +11,7 @@ import (
 
 	"github.com/lnquy/nights-watch/server/watcher/cpu"
 	"github.com/lnquy/nights-watch/server/watcher/mem"
+	"github.com/lnquy/nights-watch/server/watcher/net"
 	"github.com/sirupsen/logrus"
 	"github.com/tarm/serial"
 )
@@ -28,6 +29,7 @@ func main() {
 		logrus.Fatal(err)
 	}
 	logrus.SetLevel(lvl)
+	logrus.Infof("Log level has been set to: %s", lvl)
 
 	serialPort, err := serial.OpenPort(&serial.Config{
 		Name: *fSerialPort,
@@ -52,28 +54,36 @@ func main() {
 	logrus.Infof("Server stopped")
 }
 
-// First character dertermines the message type:
+// First character dertermines the command type:
 // 0: Config
 // 1: CPU stats
 // 2: Memory stats
 // 3: GPU stats
 // 4: Network stats
 func watchStats(ctx context.Context, serialPort *serial.Port, interval time.Duration) {
-	cw, cm := cpu.NewWatcher().GetStats(ctx, interval), mem.NewWatcher().GetStats(ctx, interval)
-	logrus.Info("Watcher started")
+	cw := cpu.NewWatcher().GetStats(ctx, interval)
+	mw := mem.NewWatcher().GetStats(ctx, interval)
+	nw := net.NewWatcher().GetStats(ctx, interval)
+	logrus.Info("Watchers started")
 	for {
 		select {
 		case s := <-cw:
-			msg := fmt.Sprintf("1|%.0f|%.0f$", s.Load, s.Temp)
-			logrus.Debugf("CPU: %s", msg)
-			if _, err := serialPort.Write([]byte(msg)); err != nil {
-				logrus.Errorf("Failed to write CPU stats to Arduino: %s", msg)
+			cmd := fmt.Sprintf("1|%.0f|%.0f$", s.Load, s.Temp)
+			logrus.Debugf("CPU: %s", cmd)
+			if _, err := serialPort.Write([]byte(cmd)); err != nil {
+				logrus.Errorf("Failed to write CPU stats to Arduino: %s", cmd)
 			}
-		case s := <-cm:
-			msg := fmt.Sprintf("2|%.0f|%d$", s.Load, s.Usage)
-			logrus.Debugf("MEM: %s", msg)
-			if _, err := serialPort.Write([]byte(msg)); err != nil {
-				logrus.Errorf("Failed to write CPU stats to Arduino: %s", msg)
+		case s := <-mw:
+			cmd := fmt.Sprintf("2|%.0f|%d$", s.Load, s.Usage)
+			logrus.Debugf("MEM: %s", cmd)
+			if _, err := serialPort.Write([]byte(cmd)); err != nil {
+				logrus.Errorf("Failed to write MEM stats to Arduino: %s", cmd)
+			}
+		case s := <-nw:
+			cmd := fmt.Sprintf("4|%d|%d$", s.Upload, s.Download)
+			logrus.Debugf("NET: %s", cmd)
+			if _, err := serialPort.Write([]byte(cmd)); err != nil {
+				logrus.Errorf("Failed to write NET stats to Arduino: %s", cmd)
 			}
 		}
 	}
