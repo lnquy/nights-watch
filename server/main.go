@@ -85,6 +85,8 @@ func watchStats(ctx context.Context, serialPort *serial.Port, interval time.Dura
 			if _, err := serialPort.Write([]byte(cmd)); err != nil {
 				logrus.Errorf("Failed to write NET stats to Arduino: %s", cmd)
 			}
+		case <-ctx.Done():
+			return
 		}
 	}
 }
