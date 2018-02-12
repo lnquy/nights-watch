@@ -26,10 +26,40 @@ void loop() {
 }
 
 void outputToLCD(String input) {
-  myNextion.setComponentText("cpu0", String(input) + "%");
-  myNextion.setComponentText("cpu1", String(input) + "*C");
-  myNextion.setComponentText("ram0", String(input) + "%");
-  myNextion.setComponentText("ram1", String(input) + "MB");
-  myNextion.setComponentText("gpu0", String(input) + "%");
-  myNextion.setComponentText("gpu1", String(input) + "MB");
+  String cmd = getValue(input, '|', 0);
+  if (cmd == "0") {
+    // TODO: Config
+  } else if (cmd == "1") {
+    // CPU
+    String load = getValue(input, '|', 1);
+    String temp = getValue(input, '|', 2);
+    myNextion.setComponentText("cpu0", String(load) + "%");
+    myNextion.setComponentText("cpu1", String(temp) + "*C");
+  } else if (cmd == "2") {
+    // MEM
+    String load = getValue(input, '|', 1);
+    String usage = getValue(input, '|', 2);
+    myNextion.setComponentText("ram0", String(load) + "%");
+    myNextion.setComponentText("ram1", String(usage) + "MB");
+  } else if (cmd == "3") {
+    // GPU
+  } else if (cmd == "4") {
+    // NET
+  }
 }
+
+// TODO: Improve this later
+String getValue(String input, char separator, int index) {
+  int found  = 0;
+  int strIndex[] = {0, -1};
+  int maxIndex = input.length() - 1;
+  for (int i = 0; i <= maxIndex && found <= index; i++) {
+    if (input.charAt(i) == separator || i == maxIndex) {
+      found++;
+      strIndex[0] = strIndex[1] + 1;
+      strIndex[1] = (i == maxIndex) ? i+1: i;
+    }
+  }
+  return found > index ? input.substring(strIndex[0], strIndex[1]): "";
+}
+

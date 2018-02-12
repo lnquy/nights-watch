@@ -11,20 +11,22 @@ func (w *watcher) GetStats(ctx context.Context, interval time.Duration) <-chan *
 	ticker := time.NewTicker(interval)
 	statsChan := make(chan *Stats, 10)
 	stats := &Stats{}
-
-	for {
-		select {
-		case <-ticker.C:
-			vm, err := psmem.VirtualMemory()
-			if err != nil {
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				vm, err := psmem.VirtualMemory()
+				if err != nil {
+					statsChan <- stats
+					continue
+				}
+				stats.Load = vm.UsedPercent
+				stats.Usage = vm.Used / 1000000 // MB
 				statsChan <- stats
-				continue
+			case <-ctx.Done():
+				ticker.Stop()
 			}
-			stats.Load = vm.UsedPercent
-			stats.Usage = vm.Used
-			statsChan <- stats
-		case <-ctx.Done():
-			ticker.Stop()
 		}
-	}
+	}()
+	return statsChan
 }

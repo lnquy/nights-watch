@@ -18,10 +18,16 @@ import (
 var (
 	fSerialPort = flag.String("sp", "", "Serial port to connect to Arduino")
 	fSerialBaud = flag.Int("sb", 9600, "Serial port baud speed")
+	fLogLevel   = flag.String("log", "info", "Log level")
 )
 
 func main() {
 	flag.Parse()
+	lvl, err := logrus.ParseLevel(*fLogLevel)
+	if err != nil {
+		logrus.Fatal(err)
+	}
+	logrus.SetLevel(lvl)
 
 	serialPort, err := serial.OpenPort(&serial.Config{
 		Name: *fSerialPort,
@@ -53,16 +59,19 @@ func main() {
 // 3: GPU stats
 // 4: Network stats
 func watchStats(ctx context.Context, serialPort *serial.Port, interval time.Duration) {
-	cw, cm := cpu.NewWatcher(), mem.NewWatcher()
+	cw, cm := cpu.NewWatcher().GetStats(ctx, interval), mem.NewWatcher().GetStats(ctx, interval)
+	logrus.Info("Watcher started")
 	for {
 		select {
-		case s := <-cw.GetStats(ctx, interval):
+		case s := <-cw:
 			msg := fmt.Sprintf("1|%.2f|%.2f$", s.Load, s.Temp)
+			logrus.Debugf("CPU: %s", msg)
 			if _, err := serialPort.Write([]byte(msg)); err != nil {
 				logrus.Errorf("Failed to write CPU stats to Arduino: %s", msg)
 			}
-		case s := <-cm.GetStats(ctx, interval):
+		case s := <-cm:
 			msg := fmt.Sprintf("2|%.2f|%d$", s.Load, s.Usage)
+			logrus.Debugf("MEM: %s", msg)
 			if _, err := serialPort.Write([]byte(msg)); err != nil {
 				logrus.Errorf("Failed to write CPU stats to Arduino: %s", msg)
 			}

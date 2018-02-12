@@ -12,19 +12,21 @@ func (w *watcher) GetStats(ctx context.Context, interval time.Duration) <-chan *
 	ticker := time.NewTicker(interval)
 	statsChan := make(chan *Stats, 10)
 	stats := &Stats{}
-
-	for {
-		select {
-		case <-ticker.C:
-			percs, err := pscpu.Percent(time.Second, true)
-			if err != nil {
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				percs, err := pscpu.Percent(0, false)
+				if err != nil {
+					statsChan <- stats
+					continue
+				}
+				stats.Load = util.GetAverage(percs)
 				statsChan <- stats
-				continue
+			case <-ctx.Done():
+				ticker.Stop()
 			}
-			stats.Load = util.GetAverage(percs) * 100.0
-			statsChan <- stats
-		case <-ctx.Done():
-			ticker.Stop()
 		}
-	}
+	}()
+	return statsChan
 }
