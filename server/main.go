@@ -14,26 +14,31 @@ import (
 	"github.com/lnquy/nights-watch/server/watcher/net"
 	"github.com/sirupsen/logrus"
 	"github.com/tarm/serial"
+	"github.com/lnquy/nights-watch/server/config"
 )
 
 var (
-	fSerialPort = flag.String("sp", "", "Serial port to connect to Arduino")
-	fSerialBaud = flag.Int("sb", 9600, "Serial port baud speed")
-	fLogLevel   = flag.String("log", "info", "Log level")
+	fAddr = flag.String("ip", "", "IP address where server bind to")
+	fPort = flag.String("port", "", "Port where server bind to")
+	fUsername = flag.String("user", "", "Administrator username")
+	fPassword = flag.String("user", "", "Administrator password")
+	fLogLevel = flag.String("log", "info", "Log level")
+
+	fSerialPort = flag.String("s-port", "", "Serial port to connect to Arduino")
+	fSerialBaud = flag.Uint("s-baud", 9600, "Serial port baud speed")
 )
 
 func main() {
+	cfg := config.LoadFromFile("")
 	flag.Parse()
-	lvl, err := logrus.ParseLevel(*fLogLevel)
-	if err != nil {
-		logrus.Fatal(err)
+	overrideConfigs(cfg)
+	if _, err := cfg.WriteToFile(""); err != nil {
+		logrus.Fatalf("failed to write config to file: %s", err)
 	}
-	logrus.SetLevel(lvl)
-	logrus.Infof("Log level has been set to: %s", lvl)
 
 	serialPort, err := serial.OpenPort(&serial.Config{
 		Name: *fSerialPort,
-		Baud: *fSerialBaud,
+		Baud: int(*fSerialBaud),
 	})
 	if err != nil {
 		logrus.Fatal(err)
@@ -104,4 +109,36 @@ func watchStats(ctx context.Context, serialPort *serial.Port, interval time.Dura
 			return
 		}
 	}
+}
+
+func overrideConfigs(cfg *config.Config) {
+	if *fAddr != "" {
+		cfg.Server.IP = *fAddr
+	}
+	if *fPort != "" {
+		cfg.Server.Port = *fPort
+	}
+	if *fLogLevel != "" {
+		cfg.Server.Log = *fLogLevel
+	}
+	if *fUsername != "" {
+		cfg.Admin.Username = *fUsername
+	}
+	if *fPassword != "" {
+		cfg.Admin.Password = *fPassword
+		// TODO: Encrypt user password
+	}
+	if *fSerialPort != "" {
+		cfg.Serial.Port = *fSerialPort
+	}
+	if *fSerialBaud > 0 {
+		cfg.Serial.Baud = *fSerialBaud
+	}
+
+	lvl, err := logrus.ParseLevel(cfg.Server.Log)
+	if err != nil {
+		logrus.Fatal(err)
+	}
+	logrus.SetLevel(lvl)
+	logrus.Infof("log level has been set to: %s", lvl)
 }
