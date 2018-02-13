@@ -48,22 +48,22 @@ type (
 	}
 
 	CPU struct {
-		LoadThreshold float64 `json:"load_threshold"`
-		TempThreshold float64 `json:"temp_threshold"`
+		LoadThreshold uint `json:"load_threshold"`
+		TempThreshold uint`json:"temp_threshold"`
 	}
 
 	Memory struct {
-		LoadThreshold float64 `json:"load_threshold"`
+		LoadThreshold uint `json:"load_threshold"`
 	}
 
 	GPU struct {
-		LoadThreshold float64 `json:"load_threshold"`
-		MemThreshold  float64 `json:"mem_threshold"`
+		LoadThreshold uint `json:"load_threshold"`
+		MemThreshold  uint `json:"mem_threshold"`
 	}
 
 	Network struct {
-		DownloadThreshold float64 `json:"download_threshold"`
-		UploadThreshold   float64 `json:"upload_threshold"`
+		DownloadThreshold uint `json:"download_threshold"`
+		UploadThreshold   uint `json:"upload_threshold"`
 	}
 )
 
