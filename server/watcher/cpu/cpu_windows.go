@@ -16,7 +16,7 @@ func (w *watcher) GetStats(ctx context.Context, interval time.Duration) <-chan *
 		for {
 			select {
 			case <-ticker.C:
-				percs, err := pscpu.Percent(0, false)
+				percs, err := pscpu.Percent(interval, false)
 				if err != nil {
 					statsChan <- stats
 					continue

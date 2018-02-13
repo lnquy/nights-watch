@@ -51,6 +51,7 @@ void outputToLCD(String input) {
   // Need bracket for each case otherwise we will face the "crosses initialization error" - Somewhat stupid :(
   switch (cmd.charAt(0)) {
     case '0':
+      // TODO
       break;
     case '1': { // CPU
       String load = getValue(input, '|', 1);
@@ -66,12 +67,17 @@ void outputToLCD(String input) {
       myNextion.setComponentText("mem1", usage + "MB");
       break;
     }
-    case '3': // GPU
+    case '3': { // GPU
+      String load = getValue(input, '|', 1);
+      String usage = getValue(input, '|', 2);
+      myNextion.setComponentText("gpu0", load + "%");
+      myNextion.setComponentText("gpu1", usage + "MB");
       break;
+    }
     case '4': { // NET
-      String up = getValue(input, '|', 1);
-      String down = getValue(input, '|', 2);
-      myNextion.setComponentText("net0", up + "/" + down + "KB/s");
+      String down = getValue(input, '|', 1);
+      String up = getValue(input, '|', 2);
+      myNextion.setComponentText("net0", down + "/" + up + "KBps");
       break;
     }
     case 'z': // Alert
