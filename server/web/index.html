@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Night's Watch</title>
+    <script src="static/js/vuejs.min.js"></script>
+    <script src="static/js/axios.min.js"></script>
+</head>
+<body>
+    <div id="app">
+        <p>{{ message }}</p>
+    </div>
+
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                message: 'Hello Vue.js!'
+            },
+            methods: {
+                loadCOMPorts: function() {
+                    var self = this;
+                    axios.get('/api/v1/serial')
+                        .then(function (res) {
+                            console.log(res);
+                            self.message = res.data;
+                        })
+                        .catch(function (err) {
+                            console.log(err);
+                        });
+
+                }
+            },
+            mounted: function() {
+                this.loadCOMPorts();
+            }
+        })
+    </script>
+</body>
+</html>

@@ -10,6 +10,11 @@ import (
 	"github.com/lnquy/nights-watch/server/watcher/net"
 	"github.com/lnquy/nights-watch/server/config"
 	"time"
+	"net/http"
+	"io/ioutil"
+	"path"
+	"github.com/lnquy/nights-watch/server/util"
+	"github.com/go-chi/render"
 )
 
 type (
@@ -30,6 +35,16 @@ const (
 	atGPU
 	atNetwork
 )
+
+var indexPage []byte
+
+func init() {
+	var err error
+	indexPage , err = ioutil.ReadFile(path.Join(util.GetWd(), "web", "index.html"))
+	if err != nil {
+		logrus.Fatalf("router: failed to load index page: %s", err)
+	}
+}
 
 func New(cfg *config.Config, sConn *serial.Port) *Router {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -131,4 +146,23 @@ func alert(sConn *serial.Port, parms []bool, flag *bool, at alertType) {
 		}
 		*flag = false
 	}
+}
+
+// Routing
+func (rt *Router) GetIndexPage(w http.ResponseWriter, r *http.Request) {
+	w.Write(indexPage)
+}
+
+func (rt *Router) GetCOMPorts(w http.ResponseWriter, r *http.Request) {
+	ports, err := util.GetCOMPorts()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	logrus.Infof("router: COM ports: %v", ports)
+	render.JSON(w, r, ports)
+}
+
+func (rt *Router) UpdateConfig(w http.ResponseWriter, r *http.Request) {
+
 }

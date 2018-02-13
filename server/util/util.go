@@ -10,6 +10,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+func GetCOMPorts() ([]string, error) {
+	return nativeGetPorts()
+}
+
 func GetWd() string {
 	wd, err := os.Getwd()
 	if err != nil {

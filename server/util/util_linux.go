@@ -1,6 +1,8 @@
 package util
 
-import "os"
+import (
+	"os"
+)
 
 func GetHome() string {
 	return os.Getenv("HOME")
@@ -8,4 +10,9 @@ func GetHome() string {
 
 func LineBreak() string {
 	return "\n"
+}
+
+func nativeGetPortsList() ([]string, error) {
+	// TODO
+	return []string{}, nil
 }

@@ -18,6 +18,8 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
 	"github.com/lnquy/nights-watch/server/router"
+	"path"
+	"github.com/lnquy/nights-watch/server/util"
 )
 
 var (
@@ -61,15 +63,17 @@ func main() {
 	go handler.WatchStats()
 
 	// Routing
-	//dir := path.Join(util.GetWd(), "templates", "dist")
-	//fileServer(r, "/dist", http.Dir(dir))
-	//r.Get("/", router.GetIndexPage)
-	//r.Get("/ws", router.ServeWebSocket)
-	//r.Route("/api/v1", func(r chi.Router) {
-	//	r.Route("/services", func(r chi.Router) {
-	//		r.Get("/", router.ListServices)
-	//	})
-	//})
+	dir := path.Join(util.GetWd(), "web", "static")
+	fileServer(r, "/static", http.Dir(dir))
+	r.Get("/", handler.GetIndexPage)
+	r.Route("/api/v1", func(r chi.Router) {
+		r.Route("/serial", func(r chi.Router) {
+			r.Get("/", handler.GetCOMPorts)
+		})
+		r.Route("/config", func(r chi.Router) {
+			r.Post("/", handler.UpdateConfig)
+		})
+	})
 
 	addr := fmt.Sprintf("%s:%d", cfg.Server.IP, cfg.Server.Port)
 	server := &http.Server{
@@ -125,4 +129,20 @@ func overrideConfigs(cfg *config.Config) {
 	}
 	logrus.SetLevel(lvl)
 	logrus.Infof("main: log level has been set to: %s", lvl)
+}
+
+func fileServer(r chi.Router, path string, root http.FileSystem) {
+	//if strings.ContainsAny(path, ":*") {
+	//	panic("FileServer does not permit URL parameters.")
+	//}
+	fs := http.StripPrefix(path, http.FileServer(root))
+	if path != "/" && path[len(path)-1] != '/' {
+		r.Get(path, http.RedirectHandler(path+"/", 301).ServeHTTP)
+		path += "/"
+	}
+	path += "*"
+
+	r.Get(path, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fs.ServeHTTP(w, r)
+	}))
 }
