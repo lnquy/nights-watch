@@ -55,8 +55,10 @@ func (r *Router) WatchStats() {
 	nw := net.NewWatcher().GetStats(r.ctx, interval)
 	logrus.Info("router: watchers started")
 
-	// Flags holds alert status (ON/OFF)
+	// Flags holds current alert status (ON/OFF)
 	cwa, mwa, nwa := false, false, false
+	// Flags holds alert status of each alert threshold
+	cwParms, mwParms, nwParms := make([]bool, 2), make([]bool, 1), make([]bool, 2)
 	for {
 		select {
 		case s := <-cw:
@@ -65,23 +67,26 @@ func (r *Router) WatchStats() {
 			if _, err := r.sConn.Write([]byte(cmd)); err != nil {
 				logrus.Errorf("CPU: failed to write stats to Arduino: %s", cmd)
 			}
-			r.alert(r.cfg.Stats.CPU.LoadThreshold, uint(s.Load), &cwa, atCPU)
-			r.alert(r.cfg.Stats.CPU.TempThreshold, uint(s.Temp), &cwa, atCPU)
+			checkThreshold(r.cfg.Stats.CPU.LoadThreshold, uint(s.Load), cwParms, 0)
+			checkThreshold(r.cfg.Stats.CPU.TempThreshold, uint(s.Temp), cwParms, 1)
+			alert(r.sConn, cwParms, &cwa, atCPU)
 		case s := <-mw:
 			cmd := fmt.Sprintf("2|%.0f|%d$", s.Load, s.Usage)
 			logrus.Debugf("MEM: %s", cmd)
 			if _, err := r.sConn.Write([]byte(cmd)); err != nil {
 				logrus.Errorf("MEM: failed to write stats to Arduino: %s", cmd)
 			}
-			r.alert(r.cfg.Stats.Memory.LoadThreshold, uint(s.Load), &mwa, atMemory)
+			checkThreshold(r.cfg.Stats.Memory.LoadThreshold, uint(s.Load), mwParms, 0)
+			alert(r.sConn, mwParms, &mwa, atMemory)
 		case s := <-nw:
 			cmd := fmt.Sprintf("4|%d|%d$", s.Download, s.Upload)
 			logrus.Debugf("NET: %s", cmd)
 			if _, err := r.sConn.Write([]byte(cmd)); err != nil {
 				logrus.Errorf("NET: failed to write stats to Arduino: %s", cmd)
 			}
-			r.alert(r.cfg.Stats.Network.DownloadThreshold, uint(s.Download), &nwa, atNetwork)
-			r.alert(r.cfg.Stats.Network.UploadThreshold, uint(s.Upload), &nwa, atNetwork)
+			checkThreshold(r.cfg.Stats.Network.DownloadThreshold, uint(s.Download), nwParms, 0)
+			checkThreshold(r.cfg.Stats.Network.UploadThreshold, uint(s.Upload), nwParms, 1)
+			alert(r.sConn, nwParms, &nwa, atNetwork)
 		case <-r.ctx.Done():
 			return
 		}
@@ -95,28 +100,35 @@ func (r *Router) Stop() {
 	logrus.Infof("router: Arduino connection closed")
 }
 
-func (r *Router) alert(threshold, value uint, flag *bool, at alertType) {
-	if threshold <= 0 {
-		return
+func checkThreshold(threshold, value uint, parms []bool, idx int) {
+	if threshold <= 0 || value < threshold {
+		parms[idx] = false
+	} else { //  // Threshold reached
+		parms[idx] = true
 	}
-	// Alert ON
-	if value >= threshold && !*flag {
-		cmd := fmt.Sprintf("z|%d|1$", at)
-		if _, err := r.sConn.Write([]byte(cmd)); err != nil {
-			logrus.Errorf("alert: failed to write alert to Arduino: %s", cmd)
+}
+
+func alert(sConn *serial.Port, parms []bool, flag *bool, at alertType) {
+	for _, v := range parms {
+		if v { // Threshold reached
+			if !*flag { // Alert is not fired yet -> Turn on alert and update status
+				cmd := fmt.Sprintf("z|%d|1$", at)
+				if _, err := sConn.Write([]byte(cmd)); err != nil {
+					logrus.Errorf("alert: failed to write alert to Arduino: %s", cmd)
+					return
+				}
+				*flag = true
+			}
 			return
 		}
-		*flag = true
-		return
 	}
-	// Alert OFF
-	if value < threshold && *flag {
+	// Back to normal state but current alert is ON -> Turn off alert and update status
+	if *flag {
 		cmd := fmt.Sprintf("z|%d|0$", at)
-		if _, err := r.sConn.Write([]byte(cmd)); err != nil {
+		if _, err := sConn.Write([]byte(cmd)); err != nil {
 			logrus.Errorf("alert: failed to write alert to Arduino: %s", cmd)
 			return
 		}
 		*flag = false
-		return
 	}
 }
