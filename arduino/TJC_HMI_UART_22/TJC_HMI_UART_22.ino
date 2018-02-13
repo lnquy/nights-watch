@@ -10,9 +10,28 @@ String inputString = "";
 void setup() {
   Serial.begin(9600);
   myNextion.init();
-  inputString.reserve(200);
+  inputString.reserve(100);
 }
 
+/* Read commands from USB Serial port, then apply to LCD.
+ * Command format: Type|Values$
+ *   - First character determines the command type:
+ *     + 0: Config
+ *     + 1: CPU stats
+ *     + 2: Memory stats
+ *     + 3: GPU stats
+ *     + 4: Network stats
+ *     + z: Alert
+ *   - Depends on command type, there may have one or many values.
+ *     Values are separated by | character.
+ *   - Command ends with $ character.
+ *   - For alert command, first value dertermines the alert type,
+ *     second value determines the alert status (0 = OFF, 1 = ON).
+ * Examples:
+ *  - 1|10|0$
+ *  - 2|34|2951$
+ *  - 4|13/227$
+ */
 void loop() {
   while (Serial.available()) {
     char inChar = (char)Serial.read();
@@ -25,30 +44,41 @@ void loop() {
   }
 }
 
+
 void outputToLCD(String input) {
   String cmd = getValue(input, '|', 0);
-  if (cmd == "0") {
-    // TODO: Config
-  } else if (cmd == "1") {
-    // CPU
-    String load = getValue(input, '|', 1);
-    String temp = getValue(input, '|', 2);
-    myNextion.setComponentText("cpu0", String(load) + "%");
-    myNextion.setComponentText("cpu1", String(temp) + "*C");
-  } else if (cmd == "2") {
-    // MEM
-    String load = getValue(input, '|', 1);
-    String usage = getValue(input, '|', 2);
-    myNextion.setComponentText("ram0", String(load) + "%");
-    myNextion.setComponentText("ram1", String(usage) + "MB");
-  } else if (cmd == "3") {
-    // GPU
-  } else if (cmd == "4") {
-    // NET
-    String net = getValue(input, '|', 1);
-    myNextion.setComponentText("net0", String(net) + "KBps");
-  } else if (cmd == "z") { // Alert
-    myNextion.sendCommand("page0.alert.bco=57798");
+
+  // Need bracket for each case otherwise we will face the "crosses initialization error" - Somewhat stupid :(
+  switch (cmd.charAt(0)) {
+    case '0':
+      break;
+    case '1': { // CPU
+      String load = getValue(input, '|', 1);
+      String temp = getValue(input, '|', 2);
+      myNextion.setComponentText("cpu0", load + "%");
+      myNextion.setComponentText("cpu1", temp + "*C");
+      break;
+    }
+    case '2': { // MEM
+      String load = getValue(input, '|', 1);
+      String usage = getValue(input, '|', 2);
+      myNextion.setComponentText("mem0", load + "%");
+      myNextion.setComponentText("mem1", usage + "MB");
+      break;
+    }
+    case '3': // GPU
+      break;
+    case '4': { // NET
+      String up = getValue(input, '|', 1);
+      String down = getValue(input, '|', 2);
+      myNextion.setComponentText("net0", up + "/" + down + "KB/s");
+      break;
+    }
+    case 'z': // Alert
+      applyAlert(input);
+      break;
+    default:
+      return;
   }
 }
 
@@ -67,3 +97,33 @@ String getValue(String input, char separator, int index) {
   return found > index ? input.substring(strIndex[0], strIndex[1]): "";
 }
 
+void applyAlert(String cmd) {
+  String alertType = getValue(cmd, '|', 1);
+  String alertColor = "10730"; // Background color
+  if (getValue(cmd, '|', 2).charAt(0) == '1') { // Alert status
+    alertColor = "57798"; // Red
+  }
+  switch (alertType.charAt(0)) {
+    case '1':
+      myNextion.sendCommand(string2char("page0.cpu_alert.bco=" + alertColor));
+      break;
+    case '2':
+      myNextion.sendCommand(string2char("page0.mem_alert.bco=" + alertColor));
+      break;
+    case '3':
+      myNextion.sendCommand(string2char("page0.gpu_alert.bco=" + alertColor));
+      break;
+    case '4':
+      myNextion.sendCommand(string2char("page0.net_alert.bco=" + alertColor));
+      break;
+    default:
+      return;
+  }
+}
+
+char* string2char(String cmd){
+    if (cmd.length() != 0){
+        char *p = const_cast<char*>(cmd.c_str());
+        return p;
+    }
+}

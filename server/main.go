@@ -81,12 +81,21 @@ func watchStats(ctx context.Context, serialPort *serial.Port, interval time.Dura
 				logrus.Errorf("Failed to write MEM stats to Arduino: %s", cmd)
 			}
 
-			// TODO
-			if _, err := serialPort.Write([]byte(fmt.Sprintf("z|MEM"))); err != nil {
+			// TODO: Test threshold
+			if _, err := serialPort.Write([]byte(fmt.Sprintf("z|1|1$"))); err != nil {
+				logrus.Errorf("Failed to write MEM alert to Arduino: %s", cmd)
+			}
+			if _, err := serialPort.Write([]byte(fmt.Sprintf("z|2|1$"))); err != nil {
+				logrus.Errorf("Failed to write MEM alert to Arduino: %s", cmd)
+			}
+			if _, err := serialPort.Write([]byte(fmt.Sprintf("z|3|1$"))); err != nil {
+				logrus.Errorf("Failed to write MEM alert to Arduino: %s", cmd)
+			}
+			if _, err := serialPort.Write([]byte(fmt.Sprintf("z|4|1$"))); err != nil {
 				logrus.Errorf("Failed to write MEM alert to Arduino: %s", cmd)
 			}
 		case s := <-nw:
-			cmd := fmt.Sprintf("4|%d/%d$", s.Upload, s.Download)
+			cmd := fmt.Sprintf("4|%d|%d$", s.Download, s.Upload)
 			logrus.Debugf("NET: %s", cmd)
 			if _, err := serialPort.Write([]byte(cmd)); err != nil {
 				logrus.Errorf("Failed to write NET stats to Arduino: %s", cmd)
