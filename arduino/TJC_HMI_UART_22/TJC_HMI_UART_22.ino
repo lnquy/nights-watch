@@ -127,8 +127,8 @@ void applyAlert(String cmd) {
   }
 }
 
-char* string2char(String cmd){
-    if (cmd.length() != 0){
+char* string2char(String cmd) {
+    if (cmd.length() != 0) {
         char *p = const_cast<char*>(cmd.c_str());
         return p;
     }
