@@ -9,23 +9,26 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/lnquy/nights-watch/server/watcher/cpu"
-	"github.com/lnquy/nights-watch/server/watcher/mem"
-	"github.com/lnquy/nights-watch/server/watcher/net"
 	"github.com/sirupsen/logrus"
 	"github.com/tarm/serial"
 	"github.com/lnquy/nights-watch/server/config"
+	"github.com/go-chi/chi"
+	"net/http"
+	"log"
+	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/cors"
+	"github.com/lnquy/nights-watch/server/router"
 )
 
 var (
-	fAddr = flag.String("ip", "", "IP address where server bind to")
-	fPort = flag.String("port", "", "Port where server bind to")
+	fAddr     = flag.String("ip", "", "IP address where server bind to")
+	fPort     = flag.Uint("port", 12345, "Port where server bind to")
 	fUsername = flag.String("user", "", "Administrator username")
-	fPassword = flag.String("user", "", "Administrator password")
+	fPassword = flag.String("pwd", "", "Administrator password")
 	fLogLevel = flag.String("log", "info", "Log level")
 
-	fSerialPort = flag.String("s-port", "", "Serial port to connect to Arduino")
-	fSerialBaud = flag.Uint("s-baud", 9600, "Serial port baud speed")
+	fSerialPort = flag.String("s_port", "", "Serial port to connect to Arduino")
+	fSerialBaud = flag.Uint("s_baud", 9600, "Serial port baud speed")
 )
 
 func main() {
@@ -33,89 +36,70 @@ func main() {
 	flag.Parse()
 	overrideConfigs(cfg)
 	if _, err := cfg.WriteToFile(""); err != nil {
-		logrus.Fatalf("failed to write config to file: %s", err)
+		logrus.Fatalf("main: failed to write config to file: %s", err)
 	}
 
-	serialPort, err := serial.OpenPort(&serial.Config{
-		Name: *fSerialPort,
-		Baud: int(*fSerialBaud),
+	logrus.Infof("main: connecting to Arduino on %s@%d", cfg.Serial.Port, cfg.Serial.Baud)
+	serialConn, err := serial.OpenPort(&serial.Config{
+		Name: cfg.Serial.Port,
+		Baud: int(cfg.Serial.Baud),
 	})
 	if err != nil {
 		logrus.Fatal(err)
 	}
-	time.Sleep(2 * time.Second) // Sleep since Arduino will restart when new connection connected
+	time.Sleep(1 * time.Second) // Sleep since Arduino will restart when new connection connected
+	logrus.Infof("main: Arduino connected")
 	// TODO: Write config here
 
-	exitChan := make(chan os.Signal, 1)
-	signal.Notify(exitChan, syscall.SIGTERM, syscall.SIGINT)
-	ctx, cancel := context.WithCancel(context.Background())
-	interval := time.Second // TODO: Configurable
-	logrus.Infof("Start watcher")
-	go watchStats(ctx, serialPort, interval)
-	// TODO: Cancel context and restart watcher when configuration changed here
+	logrus.Infof("main: starting web server")
+	r := chi.NewRouter()
+	r.Use(middleware.DefaultLogger)
+	r.Use(middleware.DefaultCompress)
+	r.Use(middleware.Recoverer)
 
-	<-exitChan
-	cancel()
-	logrus.Infof("Server stopped")
-}
+	handler := router.New(cfg, serialConn)
+	go handler.WatchStats()
 
-// First character dertermines the command type:
-// 0: Config
-// 1: CPU stats
-// 2: Memory stats
-// 3: GPU stats
-// 4: Network stats
-// z: Alert
-func watchStats(ctx context.Context, serialPort *serial.Port, interval time.Duration) {
-	cw := cpu.NewWatcher().GetStats(ctx, interval)
-	mw := mem.NewWatcher().GetStats(ctx, interval)
-	nw := net.NewWatcher().GetStats(ctx, interval)
-	logrus.Info("Watchers started")
-	for {
-		select {
-		case s := <-cw:
-			cmd := fmt.Sprintf("1|%.0f|%.0f$", s.Load, s.Temp)
-			logrus.Debugf("CPU: %s", cmd)
-			if _, err := serialPort.Write([]byte(cmd)); err != nil {
-				logrus.Errorf("Failed to write CPU stats to Arduino: %s", cmd)
-			}
-		case s := <-mw:
-			cmd := fmt.Sprintf("2|%.0f|%d$", s.Load, s.Usage)
-			logrus.Debugf("MEM: %s", cmd)
-			if _, err := serialPort.Write([]byte(cmd)); err != nil {
-				logrus.Errorf("Failed to write MEM stats to Arduino: %s", cmd)
-			}
+	// Routing
+	//dir := path.Join(util.GetWd(), "templates", "dist")
+	//fileServer(r, "/dist", http.Dir(dir))
+	//r.Get("/", router.GetIndexPage)
+	//r.Get("/ws", router.ServeWebSocket)
+	//r.Route("/api/v1", func(r chi.Router) {
+	//	r.Route("/services", func(r chi.Router) {
+	//		r.Get("/", router.ListServices)
+	//	})
+	//})
 
-			// TODO: Test threshold
-			if _, err := serialPort.Write([]byte(fmt.Sprintf("z|1|1$"))); err != nil {
-				logrus.Errorf("Failed to write MEM alert to Arduino: %s", cmd)
-			}
-			if _, err := serialPort.Write([]byte(fmt.Sprintf("z|2|1$"))); err != nil {
-				logrus.Errorf("Failed to write MEM alert to Arduino: %s", cmd)
-			}
-			if _, err := serialPort.Write([]byte(fmt.Sprintf("z|3|1$"))); err != nil {
-				logrus.Errorf("Failed to write MEM alert to Arduino: %s", cmd)
-			}
-			if _, err := serialPort.Write([]byte(fmt.Sprintf("z|4|1$"))); err != nil {
-				logrus.Errorf("Failed to write MEM alert to Arduino: %s", cmd)
-			}
-		case s := <-nw:
-			cmd := fmt.Sprintf("4|%d|%d$", s.Download, s.Upload)
-			logrus.Debugf("NET: %s", cmd)
-			if _, err := serialPort.Write([]byte(cmd)); err != nil {
-				logrus.Errorf("Failed to write NET stats to Arduino: %s", cmd)
-			}
-		case <-ctx.Done():
-			return
-		}
+	addr := fmt.Sprintf("%s:%d", cfg.Server.IP, cfg.Server.Port)
+	server := &http.Server{
+		Addr:         addr,
+		Handler:      cors.Default().Handler(r), // TODO: Dev only
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
 	}
+	stopChan := make(chan os.Signal, 1)
+	signal.Notify(stopChan, syscall.SIGTERM, syscall.SIGINT, os.Interrupt, os.Kill)
+	go func() {
+		logrus.Infof("main: web server is serving at %s", addr)
+		log.Fatal(server.ListenAndServe())
+		//logrus.Error(server.ListenAndServeTLS(tlsCrt, tlsKey))
+	}()
+
+	// Graceful shutdown
+	<-stopChan
+	logrus.Info("main: termination signal received. Exiting")
+	handler.Stop()
+	ctx, _ := context.WithTimeout(context.Background(), 3*time.Second)
+	server.Shutdown(ctx)
+	logrus.Info("main: have a nice day, goodbye!")
 }
 
 func overrideConfigs(cfg *config.Config) {
 	if *fAddr != "" {
 		cfg.Server.IP = *fAddr
 	}
-	if *fPort != "" {
+	if *fPort != 12345 && *fPort > 0 && *fPort < 65536 {
 		cfg.Server.Port = *fPort
 	}
 	if *fLogLevel != "" {
@@ -131,7 +115,7 @@ func overrideConfigs(cfg *config.Config) {
 	if *fSerialPort != "" {
 		cfg.Serial.Port = *fSerialPort
 	}
-	if *fSerialBaud > 0 {
+	if *fSerialBaud > 0 && *fSerialBaud != 9600 {
 		cfg.Serial.Baud = *fSerialBaud
 	}
 
@@ -140,5 +124,5 @@ func overrideConfigs(cfg *config.Config) {
 		logrus.Fatal(err)
 	}
 	logrus.SetLevel(lvl)
-	logrus.Infof("log level has been set to: %s", lvl)
+	logrus.Infof("main: log level has been set to: %s", lvl)
 }

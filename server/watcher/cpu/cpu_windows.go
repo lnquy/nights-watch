@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/lnquy/nights-watch/server/watcher/util"
+	"github.com/lnquy/nights-watch/server/util"
 	pscpu "github.com/shirou/gopsutil/cpu"
 )
 
