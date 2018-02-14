@@ -21,24 +21,30 @@ server:
   port: 0
   host: ""
 schema:
-- name: /home/lnquy/workspace/projects/go/src/github.com/lnquy/nights-watch
-  path: /home/lnquy/workspace/projects/go/src/github.com/lnquy/nights-watch
+- name: Night's Watch
+  #path: /home/lnquy/workspace/projects/go/src/github.com/lnquy/nights-watch
+  path: C:\Env\Gopath\src\github.com\lnquy\nights-watch\server
   commands:
-    clean:
-      status: true
-    vet:
-      status: true
-    fmt:
-      status: true
-    test:
-      status: true
+#    clean:
+#      status: true
+#    vet:
+#      status: true
+#    fmt:
+#      status: true
+#    test:
+#      status: true
     run:
       status: true
   watcher:
     paths:
     - /
+    - /web
+    - /web/static
     extensions:
     - go
+    - html
+    - js
+    - css
     ignored_paths:
     - .git
     - .realize

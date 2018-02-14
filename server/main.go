@@ -73,6 +73,9 @@ func main() {
 		r.Route("/config", func(r chi.Router) {
 			r.Post("/", handler.UpdateConfig)
 		})
+		r.Route("/dev", func(r chi.Router) {
+			r.Get("/tmpl/reload", handler.ReloadTemplate)
+		})
 	})
 
 	addr := fmt.Sprintf("%s:%d", cfg.Server.IP, cfg.Server.Port)

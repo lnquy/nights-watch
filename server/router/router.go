@@ -166,3 +166,12 @@ func (rt *Router) GetCOMPorts(w http.ResponseWriter, r *http.Request) {
 func (rt *Router) UpdateConfig(w http.ResponseWriter, r *http.Request) {
 
 }
+
+func (rt *Router) ReloadTemplate(w http.ResponseWriter, r *http.Request) {
+	var err error
+	indexPage , err = ioutil.ReadFile(path.Join(util.GetWd(), "web", "index.html"))
+	if err != nil {
+		logrus.Fatalf("router: failed to load index page: %s", err)
+	}
+	w.Write([]byte("Ok"))
+}

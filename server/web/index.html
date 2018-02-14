@@ -1,40 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Night's Watch</title>
-    <script src="static/js/vuejs.min.js"></script>
-    <script src="static/js/axios.min.js"></script>
+  <meta charset="UTF-8">
+  <title>Night's Watch</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+
+  <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Material+Icons" rel="stylesheet">
+  <link href="static/css/vuetify.min.css" rel="stylesheet">
+  <link href="static/css/nw.css" rel="stylesheet">
 </head>
 <body>
-    <div id="app">
-        <p>{{ message }}</p>
-    </div>
+<div id="app">
+  <v-app dark>
+    <v-content>
+      <!--Toolbar-->
+      <v-toolbar dark color="primary">
+        <!--<v-toolbar-side-icon></v-toolbar-side-icon>-->
+        <img src="static/img/nw.png" width="45"/>
+        <v-toolbar-title class="white--text light-font">Night's Watch</v-toolbar-title>
+        <v-spacer></v-spacer>
+        <v-btn fab flat small>
+          <v-icon>star</v-icon>
+        </v-btn>
+        <v-menu bottom lazy>
+          <v-btn icon slot="activator">
+            <v-icon >more_vert</v-icon>
+          </v-btn>
+          <v-list>
+            <v-list-tile v-for="(m, idx) in menus" :key="idx" @click="clickMenuItem(idx)">
+              <v-icon>{{ m.icon }} &nbsp;&nbsp;&nbsp;</v-icon>
+              <v-list-tile-title>{{ m.text}}</v-list-tile-title>
+            </v-list-tile>
+          </v-list>
+        </v-menu>
+      </v-toolbar>
+      <!--Main content-->
+      <v-container fluid>
+        <v-layout justify-center>
+          <v-flex class="xs12 sm8">
+            <v-card>
+              <v-card-title class="headline">
+                <v-layout>
+                  <v-flex class="xs12" style="vertical-align: middle">
+                    Serial
+                    <v-tooltip top>
+                      <v-btn class="ma-0" flat fab small style="float: right" @click="loadCOMPorts" slot="activator">
+                        <v-icon>refresh</v-icon>
+                      </v-btn>
+                      <span>Reload serial ports</span>
+                    </v-tooltip>
 
-    <script>
-        new Vue({
-            el: '#app',
-            data: {
-                message: 'Hello Vue.js!'
-            },
-            methods: {
-                loadCOMPorts: function() {
-                    var self = this;
-                    axios.get('/api/v1/serial')
-                        .then(function (res) {
-                            console.log(res);
-                            self.message = res.data;
-                        })
-                        .catch(function (err) {
-                            console.log(err);
-                        });
+                  </v-flex>
+                </v-layout>
+              </v-card-title>
+              <v-card-text class="pt-0">
+                  <v-select
+                      :items="slCOMPorts"
+                      v-model="cfg.serial.port"
+                      label="Select Serial Port"
+                      single-line
+                      bottom
+                      light
+                      solo
+                      required
+                      no-data-text="No COM ports found"
+                  ></v-select>
+              </v-card-text>
+            </v-card>
+          </v-flex>
+        </v-layout>
+      </v-container>
+    </v-content>
+  </v-app>
+</div>
 
-                }
-            },
-            mounted: function() {
-                this.loadCOMPorts();
-            }
-        })
-    </script>
+<!--Scripts-->
+<script src="static/js/vuejs.dev.js"></script> <!--TODO-->
+<script src="static/js/vuetify.min.js"></script>
+<script src="static/js/axios.min.js"></script>
+<script>
+  new Vue({
+    el: '#app',
+    data: {
+      cfg: {
+        serial: {
+          port: '',
+          baud: 9600
+        }
+      },
+      menus: [
+        {icon: 'language', text: 'Languages'},
+        {icon: 'account_circle', text: 'Change admin info'},
+        {icon: 'keyboard_return', text: 'Logout'}
+      ],
+      slCOMPorts: []
+    },
+    methods: {
+      loadCOMPorts: function () {
+        var self = this;
+        self.slCOMPorts = [];
+        axios.get('/api/v1/serial')
+            .then(function (res) {
+              console.log(res);
+              for (var i in res.data) {
+                self.slCOMPorts.push({text: res.data[i]})
+              }
+            })
+            .catch(function (err) {
+              console.log(err);
+            });
+
+      }
+    },
+    mounted: function () {
+      this.loadCOMPorts();
+    }
+  })
+</script>
 </body>
 </html>
