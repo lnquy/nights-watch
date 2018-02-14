@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Night's Watch</title>
-  <link rel="icon" href="favicon.ico" type="image/x-icon" />
+  <link rel="icon" href="favicon.ico" type="image/x-icon"/>
   <meta name="description" content="Sword in the darkness">
   <meta name="keywords" content="Night's Watch, system, monitor, arduino, go, golang, vue, vuejs">
   <meta name="author" content="Quy Le (lnquy)">
@@ -39,8 +39,8 @@
             </v-list-tile>
             <v-divider></v-divider>
             <v-list-tile @click="">
-              <v-icon>keyboard_return &nbsp;&nbsp;&nbsp;</v-icon>
-              <v-list-tile-title>Logout</v-list-tile-title>
+              <v-icon>info_outline &nbsp;&nbsp;&nbsp;</v-icon>
+              <v-list-tile-title>About</v-list-tile-title>
             </v-list-tile>
           </v-list>
         </v-menu>
@@ -99,46 +99,62 @@
                     <span class="green-accent-3">Statistics</span>
                     <v-tooltip bottom>
                       <v-icon small slot="activator" style="color: rgba(255,255,255,.61)">info_outline</v-icon>
-                      <span>Configure system statistics and alert thresholds.<br>Set value to <span style="color: #00E676"><b>0</b></span> to disable the alert.</span>
+                      <span>Configure system statistics and alert thresholds.<br>Set value to <span
+                          style="color: #00E676"><b>0</b></span> to disable the alert.</span>
                     </v-tooltip>
                   </v-flex>
                 </v-layout>
               </v-card-title>
               <v-card-text class="pt-0">
-                <span class="subheading green-secondary">CPU</span><br>
-                <v-layout class="mt-2">
-                  <v-flex class="xs6 pr-3">
-                    <v-text-field class="vtf-right" type="number" min="0" max="100" label="Load threshold" v-model="cfg.stats.cpu.load" suffix="%"></v-text-field>
+                <v-layout row wrap class="mt-3">
+                  <v-flex xs12>
+                    <v-switch class="sw-subheading" color="green accent-3" label="CPU" v-model="cfg.stats.cpu.enabled"></v-switch>
                   </v-flex>
-                  <v-flex class="xs6">
-                    <v-text-field class="vtf-right" type="number" min="0" max="100" label="Temperature threshold" v-model="cfg.stats.cpu.temp" suffix="°C"></v-text-field>
+                  <v-flex xs6 class="pr-3 mt-n1">
+                    <v-text-field class="vtf-right" type="number" min="0" max="100" label="Load threshold"
+                                  v-model="cfg.stats.cpu.load" suffix="%" :disabled="!cfg.stats.cpu.enabled"></v-text-field>
                   </v-flex>
-                </v-layout>
-
-                <span class="subheading green-secondary">Memory</span><br>
-                <v-layout class="mt-2">
-                  <v-flex class="xs12">
-                    <v-text-field class="vtf-right" type="number" min="0" max="100" label="Load threshold" v-model="cfg.stats.mem.load" suffix="%"></v-text-field>
+                  <v-flex xs6 class="mt-n1">
+                    <v-text-field class="vtf-right" type="number" min="0" max="100" label="Temperature threshold"
+                                  v-model="cfg.stats.cpu.temp" suffix="°C" :disabled="!cfg.stats.cpu.enabled"></v-text-field>
                   </v-flex>
                 </v-layout>
 
-                <span class="subheading green-secondary">GPU</span><br>
-                <v-layout class="mt-2">
-                  <v-flex class="xs6 pr-3">
-                    <v-text-field class="vtf-right" type="number" min="0" max="100" label="Load threshold" v-model="cfg.stats.gpu.load" suffix="%"></v-text-field>
+                <v-layout row wrap class="mt-3">
+                  <v-flex xs12>
+                    <v-switch class="sw-subheading" color="green accent-3" label="Memory" v-model="cfg.stats.mem.enabled"></v-switch>
                   </v-flex>
-                  <v-flex class="xs6">
-                    <v-text-field class="vtf-right" type="number" min="0" max="100000" label="Usage threshold" v-model="cfg.stats.gpu.usage" suffix="MB"></v-text-field>
+                  <v-flex class="xs12 mt-n1">
+                    <v-text-field class="vtf-right" type="number" min="0" max="100" label="Load threshold"
+                                  v-model="cfg.stats.mem.load" suffix="%" :disabled="!cfg.stats.mem.enabled"></v-text-field>
                   </v-flex>
                 </v-layout>
 
-                <span class="subheading green-secondary">Network</span><br>
-                <v-layout class="mt-2">
-                  <v-flex class="xs6 pr-3">
-                    <v-text-field class="vtf-right" type="number" min="0" max="1000000" label="Download threshold" v-model="cfg.stats.net.download" suffix="KB/s"></v-text-field>
+                <v-layout row wrap class="mt-3">
+                  <v-flex xs12>
+                    <v-switch class="sw-subheading" color="green accent-3" label="GPU" v-model="cfg.stats.gpu.enabled"></v-switch>
                   </v-flex>
-                  <v-flex class="xs6">
-                    <v-text-field class="vtf-right" type="number" min="0" max="1000000" label="Upload threshold" v-model="cfg.stats.net.upload" suffix="KB/s"></v-text-field>
+                  <v-flex class="xs6 pr-3 mt-n1">
+                    <v-text-field class="vtf-right" type="number" min="0" max="100" label="Load threshold"
+                                  v-model="cfg.stats.gpu.load" suffix="%" :disabled="!cfg.stats.gpu.enabled"></v-text-field>
+                  </v-flex>
+                  <v-flex class="xs6 mt-n1">
+                    <v-text-field class="vtf-right" type="number" min="0" max="100000" label="GPU memory threshold"
+                                  v-model="cfg.stats.gpu.mem" suffix="MB" :disabled="!cfg.stats.gpu.enabled"></v-text-field>
+                  </v-flex>
+                </v-layout>
+
+                <v-layout row wrap class="mt-3">
+                  <v-flex xs12>
+                    <v-switch class="sw-subheading" color="green accent-3" label="Network" v-model="cfg.stats.net.enabled"></v-switch>
+                  </v-flex>
+                  <v-flex class="xs6 pr-3 mt-n1">
+                    <v-text-field class="vtf-right" type="number" min="0" max="1000000" label="Download threshold"
+                                  v-model="cfg.stats.net.download" suffix="KB/s" :disabled="!cfg.stats.net.enabled"></v-text-field>
+                  </v-flex>
+                  <v-flex class="xs6 mt-n1">
+                    <v-text-field class="vtf-right" type="number" min="0" max="1000000" label="Upload threshold"
+                                  v-model="cfg.stats.net.upload" suffix="KB/s" :disabled="!cfg.stats.net.enabled"></v-text-field>
                   </v-flex>
                 </v-layout>
               </v-card-text>
@@ -157,9 +173,9 @@
                     <v-tooltip bottom>
                       <v-icon small slot="activator" style="color: rgba(255,255,255,.61)">info_outline</v-icon>
                       <span>Configure the sleep time duration.
-                        <br/>Server won't send system statistics to Arduino board and also turn off the LCD in sleep time.
-                        <br/>Set both start time and end time to <span style="color: #00E676"><b>00:00</b></span> to disable sleep time.
-                      </span>
+                          <br/>Server won't send system statistics to Arduino board and also turn off the LCD in sleep time.
+                          <br/>Set both start time and end time to <span style="color: #00E676"><b>00:00</b></span> to disable sleep time.
+                        </span>
                     </v-tooltip>
                   </v-flex>
                 </v-layout>
@@ -168,24 +184,30 @@
                 <v-layout>
                   <v-flex class="xs6 pr-3">
                     <v-menu ref="startMenu" lazy :close-on-content-click="false" transition="scale-transition"
-                        offset-y full-width :nudge-right="40" max-width="290px" min-width="290px" :return-value.sync="cfg.sleep.start">
-                      <v-text-field slot="activator" label="Pick start time" v-model="cfg.sleep.start" prepend-icon="timer" readonly></v-text-field>
-                      <v-time-picker v-model="cfg.sleep.start" @change="$refs.startMenu.save(cfg.sleep.start)"></v-time-picker>
+                            offset-y full-width :nudge-right="40" max-width="290px" min-width="290px"
+                            :return-value.sync="cfg.sleep.start">
+                      <v-text-field slot="activator" label="Pick start time" v-model="cfg.sleep.start"
+                                    prepend-icon="timer" readonly></v-text-field>
+                      <v-time-picker v-model="cfg.sleep.start"
+                                     @change="$refs.startMenu.save(cfg.sleep.start)"></v-time-picker>
                     </v-menu>
                   </v-flex>
                   <v-flex class="xs6">
                     <v-menu ref="endMenu" lazy :close-on-content-click="false" transition="scale-transition"
-                            offset-y full-width :nudge-right="40" max-width="290px" min-width="290px" :return-value.sync="cfg.sleep.end">
-                      <v-text-field slot="activator" label="Pick end time" v-model="cfg.sleep.end" prepend-icon="timer_off" readonly></v-text-field>
-                      <v-time-picker v-model="cfg.sleep.end" @change="$refs.endMenu.save(cfg.sleep.end)"></v-time-picker>
+                            offset-y full-width :nudge-right="40" max-width="290px" min-width="290px"
+                            :return-value.sync="cfg.sleep.end">
+                      <v-text-field slot="activator" label="Pick end time" v-model="cfg.sleep.end"
+                                    prepend-icon="timer_off" readonly></v-text-field>
+                      <v-time-picker v-model="cfg.sleep.end"
+                                     @change="$refs.endMenu.save(cfg.sleep.end)"></v-time-picker>
                     </v-menu>
                   </v-flex>
                 </v-layout>
-              </v-card-text>
-            </v-card>
-          </v-flex>
-        </v-layout>
       </v-container>
+      </v-card-text>
+      </v-card>
+      </v-flex>
+      </v-layout>
     </v-content>
   </v-app>
 </div>
@@ -205,17 +227,21 @@
         },
         stats: {
           cpu: {
+            enabled: false,
             load: 0,
             temp: 0
           },
           mem: {
+            enabled: false,
             load: 0
           },
           gpu: {
+            enabled: false,
             load: 0,
-            usage: 0
+            mem: 0
           },
           net: {
+            enabled: false,
             download: 0,
             upload: 0
           }
@@ -226,9 +252,9 @@
         }
       },
       menus: [
-        {icon: 'launch', text: 'Source code'},
         {icon: 'language', text: 'Languages'},
-        {icon: 'account_circle', text: 'Change admin info'}
+        {icon: 'account_circle', text: 'Change admin info'},
+        {icon: 'keyboard_return', text: 'Logout'}
       ],
       slSerialPorts: [],
       slSerialBauds: [
@@ -247,7 +273,7 @@
       ],
       isConfigChanged: false
     },
-    watch : {
+    watch: {
       cfg: {
         handler: function (newVal, oldVal) {
           this.isConfigChanged = true;
@@ -257,7 +283,7 @@
       }
     },
     methods: {
-      loadConfigs: function() {
+      loadConfigs: function () {
         var self = this;
         self.slSerialPorts = [];
         self.cfg.serial.port = '';

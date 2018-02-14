@@ -6,10 +6,15 @@
     color: #00E676 !important;
 }
 
-.green-secondary {
-    color: #90A4AE !important;
-}
-
 .vtf-right > div.input-group__input > input {
     text-align: right;
+}
+
+.sw-subheading > label {
+    font-size: 16px !important;
+    font-weight: 400;
+}
+
+.mt-n1 {
+    margin-top: -15px !important;
 }
