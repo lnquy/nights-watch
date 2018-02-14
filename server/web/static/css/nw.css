@@ -1,3 +1,7 @@
 .light-font {
     font-weight: 300;
 }
+
+.subheading.green-accent-3 {
+    color: #00E676 !important;
+}
