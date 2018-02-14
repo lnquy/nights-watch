@@ -59,17 +59,22 @@
                 </v-layout>
               </v-card-title>
               <v-card-text class="pt-0">
-                  <v-select
-                      :items="slCOMPorts"
-                      v-model="cfg.serial.port"
-                      label="Select Serial Port"
-                      single-line
-                      bottom
-                      light
-                      solo
-                      required
-                      no-data-text="No serial ports found"
-                  ></v-select>
+                <v-layout>
+                  <v-flex class="xs7 sm9 pr-3">
+                    <v-select
+                        :items="slCOMPorts" v-model="cfg.serial.port" label="Select Serial Port" single-line
+                        bottom light solo required no-data-text="No serial ports found"
+                        hint="Serial Port" persistent-hint>
+                    </v-select>
+                  </v-flex>
+                  <v-flex class="xs5 sm3">
+                    <v-select
+                        :items="slCOMBauds" v-model="cfg.serial.baud" label="Select Baud Rate" single-line
+                        bottom light solo required hint="Baud Rate" persistent-hint>
+                    </v-select>
+                  </v-flex>
+                </v-layout>
+
               </v-card-text>
             </v-card>
           </v-flex>
@@ -98,15 +103,29 @@
         {icon: 'language', text: 'Languages'},
         {icon: 'account_circle', text: 'Change admin info'}
       ],
-      slCOMPorts: []
+      slCOMPorts: [],
+      slCOMBauds: [
+        {text: '300', value: 300},
+        {text: '1200', value: 1200},
+        {text: '2400', value: 2400},
+        {text: '4800', value: 4800},
+        {text: '9600', value: 9600},
+        {text: '19200', value: 19200},
+        {text: '38400', value: 38400},
+        {text: '57600', value: 57600},
+        {text: '74880', value: 74880},
+        {text: '115200', value: 115200},
+        {text: '230400', value: 230400},
+        {text: '250000', value: 250000}
+      ]
     },
     methods: {
       loadCOMPorts: function () {
         var self = this;
         self.slCOMPorts = [];
+        self.cfg.serial.port = '';
         axios.get('/api/v1/serial')
             .then(function (res) {
-              console.log(res);
               self.slCOMPorts = res.data;
             })
             .catch(function (err) {
