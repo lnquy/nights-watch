@@ -36,13 +36,20 @@ const (
 	atNetwork
 )
 
-var indexPage []byte
+var (
+	indexPage []byte
+	favicon []byte
+)
 
 func init() {
 	var err error
-	indexPage , err = ioutil.ReadFile(path.Join(util.GetWd(), "web", "index.html"))
+	web := path.Join(util.GetWd(), "web")
+	indexPage , err = ioutil.ReadFile(path.Join(web, "index.html"))
 	if err != nil {
 		logrus.Fatalf("router: failed to load index page: %s", err)
+	}
+	if favicon, err = ioutil.ReadFile(path.Join(web, "static", "img", "favicon.ico")); err != nil {
+		logrus.Errorf("router: failed to load favicon: %s", err)
 	}
 }
 
@@ -149,6 +156,10 @@ func alert(sConn *serial.Port, parms []bool, flag *bool, at alertType) {
 }
 
 // Routing
+func (rt *Router) Favicon(w http.ResponseWriter, r *http.Request) {
+	w.Write(favicon)
+}
+
 func (rt *Router) GetIndexPage(w http.ResponseWriter, r *http.Request) {
 	w.Write(indexPage)
 }
@@ -161,6 +172,10 @@ func (rt *Router) GetCOMPorts(w http.ResponseWriter, r *http.Request) {
 	}
 	logrus.Infof("router: COM ports: %v", ports)
 	render.JSON(w, r, ports)
+}
+
+func (rt *Router) GetConfig(w http.ResponseWriter, r *http.Request) {
+
 }
 
 func (rt *Router) UpdateConfig(w http.ResponseWriter, r *http.Request) {

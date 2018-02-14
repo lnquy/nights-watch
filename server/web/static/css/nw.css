@@ -6,6 +6,10 @@
     color: #00E676 !important;
 }
 
+.green-secondary {
+    color: #90A4AE !important;
+}
+
 .vtf-right > div.input-group__input > input {
     text-align: right;
 }

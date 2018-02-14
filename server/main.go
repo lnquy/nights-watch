@@ -66,11 +66,13 @@ func main() {
 	dir := path.Join(util.GetWd(), "web", "static")
 	fileServer(r, "/static", http.Dir(dir))
 	r.Get("/", handler.GetIndexPage)
+	r.Get("/favicon.ico", handler.Favicon)
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Route("/serial", func(r chi.Router) {
 			r.Get("/", handler.GetCOMPorts)
 		})
 		r.Route("/config", func(r chi.Router) {
+			r.Get("/", handler.GetConfig)
 			r.Post("/", handler.UpdateConfig)
 		})
 		r.Route("/dev", func(r chi.Router) {
