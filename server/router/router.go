@@ -71,7 +71,8 @@ func New(cfg *config.Config, sConn *serial.Port) *Router {
 // 4: Network stats
 // z: Alert
 func (r *Router) WatchStats() {
-	interval := time.Duration(r.cfg.Stats.StatsConf.Interval) * time.Second
+	// TODO: Enable/Disable watcher
+	interval := time.Duration(r.cfg.Stats.Interval) * time.Second
 	cw := cpu.NewWatcher().GetStats(r.ctx, interval)
 	mw := mem.NewWatcher().GetStats(r.ctx, interval)
 	nw := net.NewWatcher().GetStats(r.ctx, interval)

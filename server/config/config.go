@@ -15,6 +15,7 @@ type (
 		Admin  `json:"admin"`
 		Serial `json:"serial"`
 		Stats  `json:"stats"`
+		Sleep  `json:"sleep"`
 	}
 
 	Server struct {
@@ -34,36 +35,39 @@ type (
 	}
 
 	Stats struct {
-		StatsConf `json:"stats_conf"`
-		CPU       `json:"cpu"`
-		Memory    `json:"memory"`
-		GPU       `json:"gpu"`
-		Network   `json:"network"`
+		Interval uint `json:"interval"`
+		CPU           `json:"cpu"`
+		Memory        `json:"memory"`
+		GPU           `json:"gpu"`
+		Network       `json:"network"`
 	}
 
-	StatsConf struct {
-		Interval       uint   `json:"interval"`
-		BeginSleepTime uint64 `json:"begin_sleep_time"`
-		EndSleepTime   uint64 `json:"end_sleep_time"`
+	Sleep struct {
+		Start string `json:"start"`
+		End   string `json:"end"`
 	}
 
 	CPU struct {
-		LoadThreshold uint `json:"load_threshold"`
-		TempThreshold uint`json:"temp_threshold"`
+		Enabled       bool `json:"enabled"`
+		LoadThreshold uint `json:"load"`
+		TempThreshold uint `json:"temp"`
 	}
 
 	Memory struct {
-		LoadThreshold uint `json:"load_threshold"`
+		Enabled       bool `json:"enabled"`
+		LoadThreshold uint `json:"load"`
 	}
 
 	GPU struct {
-		LoadThreshold uint `json:"load_threshold"`
-		MemThreshold  uint `json:"mem_threshold"`
+		Enabled       bool `json:"enabled"`
+		LoadThreshold uint `json:"load"`
+		MemThreshold  uint `json:"mem"`
 	}
 
 	Network struct {
-		DownloadThreshold uint `json:"download_threshold"`
-		UploadThreshold   uint `json:"upload_threshold"`
+		Enabled           bool `json:"enabled"`
+		DownloadThreshold uint `json:"download"`
+		UploadThreshold   uint `json:"upload"`
 	}
 )
 
@@ -89,10 +93,12 @@ func LoadFromFile(fp string) *Config {
 		Serial: Serial{
 			Baud: 9600,
 		},
+		Sleep: Sleep{
+			Start: "00:00",
+			End:   "00:00",
+		},
 		Stats: Stats{
-			StatsConf: StatsConf{
-				Interval: 3,
-			},
+			Interval: 1,
 		},
 	}
 	if err = json.Unmarshal(b, &cfg); err != nil {
