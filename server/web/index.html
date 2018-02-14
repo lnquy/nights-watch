@@ -14,13 +14,14 @@
   <v-app dark>
     <v-content>
       <!--Toolbar-->
-      <v-toolbar dark color="primary">
+      <v-toolbar dark color="black">
         <!--<v-toolbar-side-icon></v-toolbar-side-icon>-->
         <img src="static/img/nw.png" width="45"/>
-        <v-toolbar-title class="white--text light-font">Night's Watch</v-toolbar-title>
+        <v-toolbar-title class="white--text light-font hidden-xs-only">Night's Watch</v-toolbar-title>
         <v-spacer></v-spacer>
-        <v-btn fab flat small>
-          <v-icon>star</v-icon>
+        <v-btn color="info">
+          <v-icon small>save</v-icon>
+          &nbsp;&nbsp;Save config
         </v-btn>
         <v-menu bottom lazy>
           <v-btn icon slot="activator">
@@ -30,6 +31,11 @@
             <v-list-tile v-for="(m, idx) in menus" :key="idx" @click="clickMenuItem(idx)">
               <v-icon>{{ m.icon }} &nbsp;&nbsp;&nbsp;</v-icon>
               <v-list-tile-title>{{ m.text}}</v-list-tile-title>
+            </v-list-tile>
+            <v-divider></v-divider>
+            <v-list-tile @click="">
+              <v-icon>keyboard_return &nbsp;&nbsp;&nbsp;</v-icon>
+              <v-list-tile-title> Logout</v-list-tile-title>
             </v-list-tile>
           </v-list>
         </v-menu>
@@ -49,7 +55,6 @@
                       </v-btn>
                       <span>Reload serial ports</span>
                     </v-tooltip>
-
                   </v-flex>
                 </v-layout>
               </v-card-title>
@@ -63,7 +68,7 @@
                       light
                       solo
                       required
-                      no-data-text="No COM ports found"
+                      no-data-text="No serial ports found"
                   ></v-select>
               </v-card-text>
             </v-card>
@@ -89,9 +94,9 @@
         }
       },
       menus: [
+        {icon: 'launch', text: 'Source code'},
         {icon: 'language', text: 'Languages'},
-        {icon: 'account_circle', text: 'Change admin info'},
-        {icon: 'keyboard_return', text: 'Logout'}
+        {icon: 'account_circle', text: 'Change admin info'}
       ],
       slCOMPorts: []
     },
@@ -102,9 +107,7 @@
         axios.get('/api/v1/serial')
             .then(function (res) {
               console.log(res);
-              for (var i in res.data) {
-                self.slCOMPorts.push({text: res.data[i]})
-              }
+              self.slCOMPorts = res.data;
             })
             .catch(function (err) {
               console.log(err);
