@@ -15,6 +15,7 @@ import (
 	"path"
 	"github.com/lnquy/nights-watch/server/util"
 	"github.com/go-chi/render"
+	"encoding/json"
 )
 
 type (
@@ -70,12 +71,12 @@ func New(cfg *config.Config, sConn *serial.Port) *Router {
 // 3: GPU stats
 // 4: Network stats
 // z: Alert
-func (r *Router) WatchStats() {
+func (rt *Router) WatchStats() {
 	// TODO: Enable/Disable watcher
-	interval := time.Duration(r.cfg.Stats.Interval) * time.Second
-	cw := cpu.NewWatcher().GetStats(r.ctx, interval)
-	mw := mem.NewWatcher().GetStats(r.ctx, interval)
-	nw := net.NewWatcher().GetStats(r.ctx, interval)
+	interval := time.Duration(rt.cfg.Stats.Interval) * time.Second
+	cw := cpu.NewWatcher().GetStats(rt.ctx, interval)
+	mw := mem.NewWatcher().GetStats(rt.ctx, interval)
+	nw := net.NewWatcher().GetStats(rt.ctx, interval)
 	logrus.Info("router: watchers started")
 
 	// Flags holds current alert status (ON/OFF)
@@ -87,39 +88,39 @@ func (r *Router) WatchStats() {
 		case s := <-cw:
 			cmd := fmt.Sprintf("1|%.0f|%.0f$", s.Load, s.Temp)
 			logrus.Debugf("CPU: %s", cmd)
-			if _, err := r.sConn.Write([]byte(cmd)); err != nil {
+			if _, err := rt.sConn.Write([]byte(cmd)); err != nil {
 				logrus.Errorf("CPU: failed to write stats to Arduino: %s", cmd)
 			}
-			checkThreshold(r.cfg.Stats.CPU.LoadThreshold, uint(s.Load), cwParms, 0)
-			checkThreshold(r.cfg.Stats.CPU.TempThreshold, uint(s.Temp), cwParms, 1)
-			alert(r.sConn, cwParms, &cwa, atCPU)
+			checkThreshold(rt.cfg.Stats.CPU.LoadThreshold, uint(s.Load), cwParms, 0)
+			checkThreshold(rt.cfg.Stats.CPU.TempThreshold, uint(s.Temp), cwParms, 1)
+			alert(rt.sConn, cwParms, &cwa, atCPU)
 		case s := <-mw:
 			cmd := fmt.Sprintf("2|%.0f|%d$", s.Load, s.Usage)
 			logrus.Debugf("MEM: %s", cmd)
-			if _, err := r.sConn.Write([]byte(cmd)); err != nil {
+			if _, err := rt.sConn.Write([]byte(cmd)); err != nil {
 				logrus.Errorf("MEM: failed to write stats to Arduino: %s", cmd)
 			}
-			checkThreshold(r.cfg.Stats.Memory.LoadThreshold, uint(s.Load), mwParms, 0)
-			alert(r.sConn, mwParms, &mwa, atMemory)
+			checkThreshold(rt.cfg.Stats.Memory.LoadThreshold, uint(s.Load), mwParms, 0)
+			alert(rt.sConn, mwParms, &mwa, atMemory)
 		case s := <-nw:
 			cmd := fmt.Sprintf("4|%d|%d$", s.Download, s.Upload)
 			logrus.Debugf("NET: %s", cmd)
-			if _, err := r.sConn.Write([]byte(cmd)); err != nil {
+			if _, err := rt.sConn.Write([]byte(cmd)); err != nil {
 				logrus.Errorf("NET: failed to write stats to Arduino: %s", cmd)
 			}
-			checkThreshold(r.cfg.Stats.Network.DownloadThreshold, uint(s.Download), nwParms, 0)
-			checkThreshold(r.cfg.Stats.Network.UploadThreshold, uint(s.Upload), nwParms, 1)
-			alert(r.sConn, nwParms, &nwa, atNetwork)
-		case <-r.ctx.Done():
+			checkThreshold(rt.cfg.Stats.Network.DownloadThreshold, uint(s.Download), nwParms, 0)
+			checkThreshold(rt.cfg.Stats.Network.UploadThreshold, uint(s.Upload), nwParms, 1)
+			alert(rt.sConn, nwParms, &nwa, atNetwork)
+		case <-rt.ctx.Done():
 			return
 		}
 	}
 }
 
-func (r *Router) Stop() {
-	r.cancel()
+func (rt *Router) Stop() {
+	rt.cancel()
 	logrus.Infof("router: watchers stopped")
-	r.sConn.Close()
+	rt.sConn.Close()
 	logrus.Infof("router: Arduino connection closed")
 }
 
@@ -176,7 +177,12 @@ func (rt *Router) GetCOMPorts(w http.ResponseWriter, r *http.Request) {
 }
 
 func (rt *Router) GetConfig(w http.ResponseWriter, r *http.Request) {
-
+	b, err := json.Marshal(rt.cfg.Arduino)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Write(b)
 }
 
 func (rt *Router) UpdateConfig(w http.ResponseWriter, r *http.Request) {

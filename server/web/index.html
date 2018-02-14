@@ -134,11 +134,11 @@
 
                 <v-layout row wrap class="mt-3">
                   <v-flex xs12>
-                    <v-switch class="sw-subheading" color="green accent-3" label="Memory" v-model="cfg.stats.mem.enabled"></v-switch>
+                    <v-switch class="sw-subheading" color="green accent-3" label="Memory" v-model="cfg.stats.memory.enabled"></v-switch>
                   </v-flex>
                   <v-flex class="xs12 mt-n1">
                     <v-text-field class="vtf-right" type="number" min="0" max="100" label="Load threshold"
-                                  v-model="cfg.stats.mem.load" suffix="%" :disabled="!cfg.stats.mem.enabled"></v-text-field>
+                                  v-model="cfg.stats.memory.load" suffix="%" :disabled="!cfg.stats.memory.enabled"></v-text-field>
                   </v-flex>
                 </v-layout>
 
@@ -158,15 +158,15 @@
 
                 <v-layout row wrap class="mt-3">
                   <v-flex xs12>
-                    <v-switch class="sw-subheading" color="green accent-3" label="Network" v-model="cfg.stats.net.enabled"></v-switch>
+                    <v-switch class="sw-subheading" color="green accent-3" label="Network" v-model="cfg.stats.network.enabled"></v-switch>
                   </v-flex>
                   <v-flex class="xs6 pr-3 mt-n1">
                     <v-text-field class="vtf-right" type="number" min="0" max="1000000" label="Download threshold"
-                                  v-model="cfg.stats.net.download" suffix="KB/s" :disabled="!cfg.stats.net.enabled"></v-text-field>
+                                  v-model="cfg.stats.network.download" suffix="KB/s" :disabled="!cfg.stats.network.enabled"></v-text-field>
                   </v-flex>
                   <v-flex class="xs6 mt-n1">
                     <v-text-field class="vtf-right" type="number" min="0" max="1000000" label="Upload threshold"
-                                  v-model="cfg.stats.net.upload" suffix="KB/s" :disabled="!cfg.stats.net.enabled"></v-text-field>
+                                  v-model="cfg.stats.network.upload" suffix="KB/s" :disabled="!cfg.stats.network.enabled"></v-text-field>
                   </v-flex>
                 </v-layout>
               </v-card-text>
@@ -244,7 +244,7 @@
             load: 0,
             temp: 0
           },
-          mem: {
+          memory: {
             enabled: false,
             load: 0
           },
@@ -253,7 +253,7 @@
             load: 0,
             mem: 0
           },
-          net: {
+          network: {
             enabled: false,
             download: 0,
             upload: 0
@@ -311,17 +311,17 @@
     methods: {
       loadConfigs: function () {
         var self = this;
-        self.slSerialPorts = [];
-        self.cfg.serial.port = '';
         axios.get('/api/v1/config')
             .then(function (res) {
-              // TODO: Map response to this.cfg
-              console.log(res.data)
+              console.log('CFG', JSON.stringify(res.data))
+              self.cfg = res.data;
+              setTimeout(function() {
+                self.isConfigChanged = false;
+              }, 100);
             })
             .catch(function (err) {
-              console.log(err);
+              console.log('CONFIG', err);
             });
-
       },
       loadSerialPorts: function () {
         var self = this;
@@ -330,16 +330,15 @@
         axios.get('/api/v1/serial')
             .then(function (res) {
               self.slSerialPorts = res.data;
+              self.loadConfigs();
             })
             .catch(function (err) {
-              console.log(err);
+              console.log('SERIAL', err);
             });
-
       }
     },
     mounted: function () {
       this.loadSerialPorts();
-      this.loadConfigs();
     }
   })
 </script>

@@ -13,9 +13,7 @@ type (
 	Config struct {
 		Server `json:"server"`
 		Admin  `json:"admin"`
-		Serial `json:"serial"`
-		Stats  `json:"stats"`
-		Sleep  `json:"sleep"`
+		Arduino `json:"arduino"`
 	}
 
 	Server struct {
@@ -27,6 +25,12 @@ type (
 	Admin struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
+	}
+
+	Arduino struct {
+		Serial `json:"serial"`
+		Stats  `json:"stats"`
+		Sleep  `json:"sleep"`
 	}
 
 	Serial struct {
@@ -90,15 +94,17 @@ func LoadFromFile(fp string) *Config {
 			Username: "admin",
 			Password: "admin",
 		},
-		Serial: Serial{
-			Baud: 9600,
-		},
-		Sleep: Sleep{
-			Start: "00:00",
-			End:   "00:00",
-		},
-		Stats: Stats{
-			Interval: 1,
+		Arduino: Arduino{
+			Serial: Serial{
+				Baud: 9600,
+			},
+			Sleep: Sleep{
+				Start: "00:00",
+				End:   "00:00",
+			},
+			Stats: Stats{
+				Interval: 1,
+			},
 		},
 	}
 	if err = json.Unmarshal(b, &cfg); err != nil {
