@@ -94,37 +94,46 @@
                       Statistics
                       <v-tooltip bottom>
                         <v-icon small slot="activator" style="color: rgba(255,255,255,.91)">info_outline</v-icon>
-                        <span>Configure system statistics and alert thresholds.</span>
+                        <span>Configure system statistics and alert thresholds.<br>Set value to 0 to disable the threshold.</span>
                       </v-tooltip>
                     </v-flex>
                   </v-layout>
                 </v-card-title>
                 <v-card-text class="pt-0">
-                  <v-layout>
-                    <v-flex class="xs12">
-                      <span class="subheading green-accent-3">CPU</span><br>
-                      Load threshold<br>
-                      Temperature threshold
+                  <span class="subheading green-accent-3">CPU</span><br>
+                  <v-layout class="mt-2">
+                    <v-flex class="xs6 pr-3">
+                      <v-text-field class="vtf-right" label="Load threshold" v-model="cfg.stats.cpu.load" suffix="%"></v-text-field>
+                    </v-flex>
+                    <v-flex class="xs6">
+                      <v-text-field class="vtf-right" label="Temperature threshold" v-model="cfg.stats.cpu.temp" suffix="°C"></v-text-field>
                     </v-flex>
                   </v-layout>
-                  <v-layout class="mt-3">
+
+                  <span class="subheading green-accent-3">Memory</span><br>
+                  <v-layout class="mt-2">
                     <v-flex class="xs12">
-                      <span class="subheading green-accent-3">Memory</span><br>
-                      Load threshold
+                      <v-text-field class="vtf-right" label="Load threshold" v-model="cfg.stats.mem.load" suffix="%"></v-text-field>
                     </v-flex>
                   </v-layout>
-                  <v-layout class="mt-3">
-                    <v-flex class="xs12">
-                      <span class="subheading green-accent-3">GPU</span><br>
-                      Load threshold<br>
-                      Usage threshold
+
+                  <span class="subheading green-accent-3">GPU</span><br>
+                  <v-layout class="mt-2">
+                    <v-flex class="xs6 pr-3">
+                      <v-text-field class="vtf-right" label="Load threshold" v-model="cfg.stats.gpu.load" suffix="%"></v-text-field>
+                    </v-flex>
+                    <v-flex class="xs6">
+                      <v-text-field class="vtf-right" label="Usage threshold" v-model="cfg.stats.gpu.usage" suffix="MB"></v-text-field>
                     </v-flex>
                   </v-layout>
-                  <v-layout class="mt-3">
-                    <v-flex class="xs12">
-                      <span class="subheading green-accent-3">Network</span><br>
-                      Download threshold<br>
-                      Upload threshold
+
+                  <span class="subheading green-accent-3">Network</span><br>
+                  <v-layout class="mt-2">
+                    <v-flex class="xs6 pr-3">
+                      <v-text-field class="vtf-right" label="Download threshold" v-model="cfg.stats.net.download" suffix="KB/s"></v-text-field>
+                    </v-flex>
+                    <v-flex class="xs6">
+                      <v-text-field class="vtf-right" label="Upload threshold" v-model="cfg.stats.net.upload" suffix="KB/s"></v-text-field>
                     </v-flex>
                   </v-layout>
                 </v-card-text>
@@ -148,6 +157,23 @@
         serial: {
           port: '',
           baud: 9600
+        },
+        stats: {
+          cpu: {
+            load: 0,
+            temp: 0
+          },
+          mem: {
+            load: 0
+          },
+          gpu: {
+            load: 0,
+            usage: 0
+          },
+          net: {
+            download: 0,
+            upload: 0
+          }
         }
       },
       menus: [
