@@ -140,6 +140,43 @@
               </v-card>
             <v-flex>
         </v-layout>
+
+        <!--SleepTime card-->
+        <v-layout class="mt-3" justify-center>
+          <v-flex class="xs12 sm8">
+            <v-card>
+              <v-card-title class="headline">
+                <v-layout>
+                  <v-flex class="xs12">
+                    Sleep Time
+                    <v-tooltip bottom>
+                      <v-icon small slot="activator" style="color: rgba(255,255,255,.91)">info_outline</v-icon>
+                      <span>Configure the sleep time duration.<br/>Server won't send system statistics to Arduino board and also turn off the LCD in sleep time.</span>
+                    </v-tooltip>
+                  </v-flex>
+                </v-layout>
+              </v-card-title>
+              <v-card-text class="pt-0">
+                <v-layout>
+                  <v-flex class="xs6 pr-3">
+                    <v-menu ref="startMenu" lazy :close-on-content-click="false" transition="scale-transition"
+                        offset-y full-width :nudge-right="40" max-width="290px" min-width="290px" :return-value.sync="time">
+                      <v-text-field slot="activator" label="Pick start time" v-model="cfg.cfg.startSleep" prepend-icon="timer" readonly></v-text-field>
+                      <v-time-picker v-model="cfg.cfg.startSleep" @change="$refs.startMenu.save(cfg.cfg.startSleep)"></v-time-picker>
+                    </v-menu>
+                  </v-flex>
+                  <v-flex class="xs6">
+                    <v-menu ref="endMenu" lazy :close-on-content-click="false" transition="scale-transition"
+                            offset-y full-width :nudge-right="40" max-width="290px" min-width="290px" :return-value.sync="time">
+                      <v-text-field slot="activator" label="Pick end time" v-model="cfg.cfg.endSleep" prepend-icon="timer_off" readonly></v-text-field>
+                      <v-time-picker v-model="cfg.cfg.endSleep" @change="$refs.endMenu.save(cfg.cfg.endSleep)"></v-time-picker>
+                    </v-menu>
+                  </v-flex>
+                </v-layout>
+              </v-card-text>
+            </v-card>
+          </v-flex>
+        </v-layout>
       </v-container>
     </v-content>
   </v-app>
@@ -153,6 +190,8 @@
   new Vue({
     el: '#app',
     data: {
+      time: null,
+      menu2: false,
       cfg: {
         serial: {
           port: '',
@@ -174,6 +213,10 @@
             download: 0,
             upload: 0
           }
+        },
+        cfg: {
+          startSleep: null,
+          endSleep: null
         }
       },
       menus: [
