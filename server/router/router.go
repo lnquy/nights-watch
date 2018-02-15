@@ -82,7 +82,7 @@ func newSerialConn(cfg config.Config) *serial.Port {
 	}
 
 	// Sleep since Arduino will restart when new connection connected
-	time.Sleep(300 * time.Millisecond)
+	time.Sleep(2 * time.Second)
 	logrus.Infof("router: Arduino connected")
 	return serialConn
 }
@@ -103,7 +103,6 @@ func (rt *Router) WatchStats() {
 	rt.sConn.Write([]byte("z|1|0$"))
 	if rt.cfg.Stats.CPU.Enabled {
 		cw = cpu.NewWatcher().GetStats(rt.ctx, interval)
-		logrus.Info("router: CPU watcher started")
 	}
 
 	mw := make(<-chan *mem.Stats)
@@ -111,7 +110,6 @@ func (rt *Router) WatchStats() {
 	rt.sConn.Write([]byte("z|2|0$"))
 	if rt.cfg.Stats.Memory.Enabled {
 		mw = mem.NewWatcher().GetStats(rt.ctx, interval)
-		logrus.Info("router: memory watcher started")
 	}
 
 	gw := make(<-chan *gpu.Stats)
@@ -119,7 +117,6 @@ func (rt *Router) WatchStats() {
 	rt.sConn.Write([]byte("z|3|0$"))
 	if rt.cfg.Stats.GPU.Enabled {
 		gw = gpu.NewWatcher().GetStats(rt.ctx, interval)
-		logrus.Info("router: gpu watcher started")
 	}
 
 	nw := make(<-chan *net.Stats)
@@ -127,7 +124,6 @@ func (rt *Router) WatchStats() {
 	rt.sConn.Write([]byte("z|4|0$"))
 	if rt.cfg.Stats.Network.Enabled {
 		nw = net.NewWatcher().GetStats(rt.ctx, interval)
-		logrus.Info("router: network watcher started")
 	}
 
 	// Flags holds current alert status (ON/OFF)
@@ -137,6 +133,9 @@ func (rt *Router) WatchStats() {
 	for {
 		select {
 		case s := <-cw:
+			if s == nil {
+				continue
+			}
 			cmd := fmt.Sprintf("1|%.0f|%.0f$", s.Load, s.Temp)
 			logrus.Debugf("CPU: %s", cmd)
 			if _, err := rt.sConn.Write([]byte(cmd)); err != nil {
@@ -146,6 +145,9 @@ func (rt *Router) WatchStats() {
 			checkThreshold(rt.cfg.Stats.CPU.TempThreshold, uint(s.Temp), cwParms, 1)
 			alert(rt.sConn, cwParms, &cwa, atCPU)
 		case s := <-mw:
+			if s == nil {
+				continue
+			}
 			cmd := fmt.Sprintf("2|%.0f|%d$", s.Load, s.Usage)
 			logrus.Debugf("MEM: %s", cmd)
 			if _, err := rt.sConn.Write([]byte(cmd)); err != nil {
@@ -154,7 +156,10 @@ func (rt *Router) WatchStats() {
 			checkThreshold(rt.cfg.Stats.Memory.LoadThreshold, uint(s.Load), mwParms, 0)
 			alert(rt.sConn, mwParms, &mwa, atMemory)
 		case s := <-gw:
-			cmd := fmt.Sprintf("3|%d|%d$", s.Load, s.Mem)
+			if s == nil {
+				continue
+			}
+			cmd := fmt.Sprintf("3|%.0f|%d$", s.Load, s.Mem)
 			logrus.Debugf("GPU: %s", cmd)
 			if _, err := rt.sConn.Write([]byte(cmd)); err != nil {
 				logrus.Errorf("GPU: failed to write stats to Arduino: %s", cmd)
@@ -163,6 +168,9 @@ func (rt *Router) WatchStats() {
 			checkThreshold(rt.cfg.Stats.GPU.MemThreshold, uint(s.Mem), gwParms, 1)
 			alert(rt.sConn, gwParms, &gwa, atGPU)
 		case s := <-nw:
+			if s == nil {
+				continue
+			}
 			cmd := fmt.Sprintf("4|%d|%d$", s.Download, s.Upload)
 			logrus.Debugf("NET: %s", cmd)
 			if _, err := rt.sConn.Write([]byte(cmd)); err != nil {
@@ -181,7 +189,6 @@ func (rt *Router) WatchStats() {
 func (rt *Router) Stop() {
 	if rt.cancel != nil {
 		rt.cancel()
-		logrus.Infof("router: watchers stopped")
 	}
 	if rt.sConn != nil {
 		rt.sConn.Close()
@@ -276,7 +283,9 @@ func (rt *Router) UpdateConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Kill old watchers and Arduino connection then spawn new ones by new config
+	logrus.Infof("router: config updated. Terminating old watchers and Arduino connection")
 	rt.Stop()
+	logrus.Infof("router: re-spawning Arduino connection and watchers")
 	rt.sConn = newSerialConn(*rt.cfg)
 	if rt.sConn == nil {
 		http.Error(w, "Invalid serial configuration", http.StatusBadRequest)

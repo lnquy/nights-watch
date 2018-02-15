@@ -15,6 +15,7 @@ func (w *watcher) GetStats(ctx context.Context, interval time.Duration) <-chan *
 	sec := uint64(interval / time.Second)
 
 	go func() {
+		logrus.Infof("watcher: NET watcher started")
 		for {
 			select {
 			case <-ticker.C:
@@ -29,7 +30,10 @@ func (w *watcher) GetStats(ctx context.Context, interval time.Duration) <-chan *
 				lastStats.Upload = netStats[0].BytesSent
 				statsChan <- stats
 			case <-ctx.Done():
+				close(statsChan)
 				ticker.Stop()
+				logrus.Infof("watcher: NET watcher stopped")
+				return
 			}
 		}
 	}()

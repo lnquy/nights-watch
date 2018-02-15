@@ -353,7 +353,7 @@
             })
             .catch(function (err) {
               self.showSnackbar('error', 'Failed to load configuration');
-              console.log('CONFIG', err);
+              console.log('CONFIG', err.response);
             });
       },
       loadSerialPorts: function (refreshOnly) {
@@ -370,15 +370,13 @@
             })
             .catch(function (err) {
               self.showSnackbar('error', 'Failed to refresh serial ports list');
-              console.log('SERIAL', err);
+              console.log('SERIAL', err.response);
             });
       },
       saveConfig: function() {
         var self = this;
         self.btnLoading = true;
-        var cfg = forceNumericObject(self.cfg);
-        console.log(cfg)
-        axios.post('/api/v1/config', cfg)
+        axios.post('/api/v1/config', forceNumericObject(self.cfg))
             .then(function (res) {
               self.showSnackbar('success', 'Configuration saved');
               self.isConfigChanged = false;
@@ -387,8 +385,8 @@
             .catch(function (err) {
               self.isConfigChanged = true;
               self.btnLoading = false;
-              self.showSnackbar('error', 'Failed to save configuration: ' + err.message);
-              console.log('SAVE CONFIG', err);
+              self.showSnackbar('error', 'Failed to save configuration: ' + err.response.data);
+              console.log('SAVE CONFIG', err.response);
             });
       },
       showSnackbar: function(type, msg, timeout) {
