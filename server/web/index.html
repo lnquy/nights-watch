@@ -60,7 +60,7 @@
                       <span>Configure the serial port which connects to Arduino board.<br/>Also the baud rate (default 9600).</span>
                     </v-tooltip>
                     <v-tooltip top>
-                      <v-btn class="ma-0" flat fab small style="float: right" @click="loadSerialPorts" slot="activator">
+                      <v-btn class="ma-0" flat fab small style="float: right" @click="loadSerialPorts(true)" slot="activator">
                         <v-icon>refresh</v-icon>
                       </v-btn>
                       <span>Refresh serial ports</span>
@@ -220,6 +220,12 @@
       </v-card>
       </v-flex>
       </v-layout>
+
+      <!--Snackbar-->
+      <v-snackbar v-model="snb.show" :timeout="snb.timeout" :color="snb.color" top>
+        <span class="text--white">{{ snb.msg }}</span>
+        <v-btn flat color="secondary" @click.native="snb.show = false">Close</v-btn>
+      </v-snackbar>
     </v-content>
   </v-app>
 </div>
@@ -297,7 +303,13 @@
         {text: '3 minutes', value: 180},
         {text: '5 minutes', value: 300}
       ],
-      isConfigChanged: false
+      isConfigChanged: false,
+      snb: {
+        show: false,
+        timeout: 3500,
+        color: 'info',
+        msg: ''
+      }
     },
     watch: {
       cfg: {
@@ -313,32 +325,46 @@
         var self = this;
         axios.get('/api/v1/config')
             .then(function (res) {
-              console.log('CFG', JSON.stringify(res.data))
               self.cfg = res.data;
               setTimeout(function() {
                 self.isConfigChanged = false;
+                self.showSnackbar('success', 'Configuration loaded successfully');
               }, 100);
             })
             .catch(function (err) {
+              self.showSnackbar('error', 'Failed to load configuration');
               console.log('CONFIG', err);
             });
       },
-      loadSerialPorts: function () {
+      loadSerialPorts: function (refreshOnly) {
         var self = this;
         self.slSerialPorts = [];
         self.cfg.serial.port = '';
         axios.get('/api/v1/serial')
             .then(function (res) {
               self.slSerialPorts = res.data;
-              self.loadConfigs();
+              self.showSnackbar('success', 'Serial ports list refreshed');
+              if (!refreshOnly) {
+                self.loadConfigs();
+              }
             })
             .catch(function (err) {
+              self.showSnackbar('error', 'Failed to refresh serial ports list');
               console.log('SERIAL', err);
             });
+      },
+      showSnackbar: function(type, msg, timeout) {
+        if (!timeout) {
+          timeout = 3500;
+        }
+        this.snb.timeout = timeout;
+        this.snb.color = type;
+        this.snb.msg = msg;
+        this.snb.show = true;
       }
     },
     mounted: function () {
-      this.loadSerialPorts();
+      this.loadSerialPorts(false);
     }
   })
 </script>
