@@ -6,6 +6,7 @@ import (
 
 	"github.com/lnquy/nights-watch/server/util"
 	pscpu "github.com/shirou/gopsutil/cpu"
+	pshost "github.com/shirou/gopsutil/host"
 	"github.com/sirupsen/logrus"
 )
 
@@ -24,6 +25,14 @@ func (w *watcher) GetStats(ctx context.Context, interval time.Duration) <-chan *
 					continue
 				}
 				stats.Load = util.GetAverage(percs)
+				temps, err := pshost.SensorsTemperatures()
+				if err != nil {
+					statsChan <- stats
+					logrus.Error(err)
+					continue
+				}
+				logrus.Debugf("Sensor temps: %#v", temps)
+				stats.Temp = temps[0].Temperature
 				statsChan <- stats
 			case <-ctx.Done():
 				close(statsChan)

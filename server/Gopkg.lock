@@ -17,6 +17,12 @@
   version = "v3.3.2"
 
 [[projects]]
+  name = "github.com/go-chi/cors"
+  packages = ["."]
+  revision = "dba6525398619dead495962a916728e7ee2ca322"
+  version = "v1.0.0"
+
+[[projects]]
   name = "github.com/go-chi/render"
   packages = ["."]
   revision = "9f855fadd4b8cde7773f9ef51f6b2705af239519"
@@ -35,12 +41,18 @@
   name = "github.com/shirou/gopsutil"
   packages = [
     "cpu",
-    "internal/common",
+    "host",
     "mem",
     "net"
   ]
   revision = "c432be29ccce470088d07eea25b3ea7e68a8afbb"
   version = "v2.18.01"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/shirou/w32"
+  packages = ["."]
+  revision = "bb4de0191aa41b5507caa14b0650cdbddcd9280b"
 
 [[projects]]
   name = "github.com/sirupsen/logrus"
@@ -72,6 +84,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "dc34374b266f20289ced39746576ce7b69f9577673d800099003ff0fc980ae0c"
+  inputs-digest = "1393a00243ca1d50adcd5ca7a8c2fcc2691a764450a0c81d325fe70074443e78"
   solver-name = "gps-cdcl"
   solver-version = 1
