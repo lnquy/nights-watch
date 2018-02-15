@@ -1,9 +1,9 @@
 package config
 
 import (
-	"path"
-	"io/ioutil"
 	"encoding/json"
+	"io/ioutil"
+	"path"
 
 	"github.com/lnquy/nights-watch/server/util"
 	"github.com/sirupsen/logrus"

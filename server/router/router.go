@@ -1,22 +1,23 @@
 package router
 
 import (
-	"github.com/tarm/serial"
 	"context"
-	"github.com/sirupsen/logrus"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"path"
+	"time"
+
+	"github.com/go-chi/render"
+	"github.com/lnquy/nights-watch/server/config"
+	"github.com/lnquy/nights-watch/server/util"
 	"github.com/lnquy/nights-watch/server/watcher/cpu"
+	"github.com/lnquy/nights-watch/server/watcher/gpu"
 	"github.com/lnquy/nights-watch/server/watcher/mem"
 	"github.com/lnquy/nights-watch/server/watcher/net"
-	"github.com/lnquy/nights-watch/server/config"
-	"time"
-	"net/http"
-	"io/ioutil"
-	"path"
-	"github.com/lnquy/nights-watch/server/util"
-	"github.com/go-chi/render"
-	"encoding/json"
-	"github.com/lnquy/nights-watch/server/watcher/gpu"
+	"github.com/sirupsen/logrus"
+	"github.com/tarm/serial"
 )
 
 type (

@@ -4,21 +4,21 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log"
+	"net/http"
 	"os"
 	"os/signal"
+	"path"
 	"syscall"
 	"time"
 
-	"github.com/sirupsen/logrus"
-	"github.com/lnquy/nights-watch/server/config"
 	"github.com/go-chi/chi"
-	"net/http"
-	"log"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
+	"github.com/lnquy/nights-watch/server/config"
 	"github.com/lnquy/nights-watch/server/router"
-	"path"
 	"github.com/lnquy/nights-watch/server/util"
+	"github.com/sirupsen/logrus"
 )
 
 var (

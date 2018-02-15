@@ -3,6 +3,7 @@ package gpu
 import (
 	"context"
 	"time"
+
 	"github.com/sirupsen/logrus"
 )
 
