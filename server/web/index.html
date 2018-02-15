@@ -235,6 +235,25 @@
 <script src="static/js/vuetify.min.js"></script>
 <script src="static/js/axios.min.js"></script>
 <script>
+  // Convert all numeric string (e.g.: "15") fields to its actual numeric value (15).
+  // Since Go backend will failed to convert string fields to uint/int fields,
+  // we have to convert all these fields to numeric type before posting to backend.
+  var forceNumericObject = function(obj) {
+    for (var key in obj) {
+      if (obj.hasOwnProperty(key)) {
+        if (typeof obj[key] === 'object') {
+          forceNumericObject(obj[key]); // Recursive to nested fields
+        } else if (typeof obj[key] === 'string') {
+          var num = Number(obj[key]);
+          if (num) {
+            obj[key] = num; // Convert numeric string to numeric
+          }
+        }
+      }
+    }
+    return obj;
+  };
+
   new Vue({
     el: '#app',
     data: {
@@ -357,7 +376,9 @@
       saveConfig: function() {
         var self = this;
         self.btnLoading = true;
-        axios.post('/api/v1/config', self.cfg)
+        var cfg = forceNumericObject(self.cfg);
+        console.log(cfg)
+        axios.post('/api/v1/config', cfg)
             .then(function (res) {
               self.showSnackbar('success', 'Configuration saved');
               self.isConfigChanged = false;
@@ -366,7 +387,7 @@
             .catch(function (err) {
               self.isConfigChanged = true;
               self.btnLoading = false;
-              self.showSnackbar('error', 'Failed to save configuration');
+              self.showSnackbar('error', 'Failed to save configuration: ' + err.message);
               console.log('SAVE CONFIG', err);
             });
       },

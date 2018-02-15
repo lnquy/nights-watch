@@ -16,13 +16,14 @@ import (
 	"github.com/lnquy/nights-watch/server/util"
 	"github.com/go-chi/render"
 	"encoding/json"
+	"github.com/lnquy/nights-watch/server/watcher/gpu"
 )
 
 type (
 	Router struct {
-		cfg *config.Config
-		sConn *serial.Port
-		ctx context.Context
+		cfg    *config.Config
+		sConn  *serial.Port
+		ctx    context.Context
 		cancel context.CancelFunc
 	}
 
@@ -30,7 +31,7 @@ type (
 )
 
 const (
-	atConfig alertType = iota
+	atConfig  alertType = iota
 	atCPU
 	atMemory
 	atGPU
@@ -39,13 +40,13 @@ const (
 
 var (
 	indexPage []byte
-	favicon []byte
+	favicon   []byte
 )
 
 func init() {
 	var err error
 	web := path.Join(util.GetWd(), "web")
-	indexPage , err = ioutil.ReadFile(path.Join(web, "index.html"))
+	indexPage, err = ioutil.ReadFile(path.Join(web, "index.html"))
 	if err != nil {
 		logrus.Fatalf("router: failed to load index page: %s", err)
 	}
@@ -56,10 +57,10 @@ func init() {
 
 func New(cfg *config.Config) *Router {
 	ctx, cancel := context.WithCancel(context.Background())
-	r := &Router {
-		cfg: cfg,
-		sConn: newSerialConn(*cfg),
-		ctx: ctx,
+	r := &Router{
+		cfg:    cfg,
+		sConn:  newSerialConn(*cfg),
+		ctx:    ctx,
 		cancel: cancel,
 	}
 	if r.sConn != nil {
@@ -76,7 +77,7 @@ func newSerialConn(cfg config.Config) *serial.Port {
 	})
 	if err != nil {
 		logrus.Errorf("router: failed to connect to Arduino on %s@%d: %s", cfg.Serial.Port, cfg.Serial.Baud, err)
-		logrus.Warnf("        => Please define the serial config in config file or configure via web page!", cfg.Serial.Port, cfg.Serial.Baud, err)
+		logrus.Warn("=> Please define the serial config in config file or configure via web page!")
 		return nil
 	}
 
@@ -94,17 +95,45 @@ func newSerialConn(cfg config.Config) *serial.Port {
 // 4: Network stats
 // z: Alert
 func (rt *Router) WatchStats() {
-	// TODO: Enable/Disable watcher
 	interval := time.Duration(rt.cfg.Stats.Interval) * time.Second
-	cw := cpu.NewWatcher().GetStats(rt.ctx, interval)
-	mw := mem.NewWatcher().GetStats(rt.ctx, interval)
-	nw := net.NewWatcher().GetStats(rt.ctx, interval)
-	logrus.Info("router: watchers started")
+
+	// Reset all old stats/alerts then init new watchers
+	cw := make(<-chan *cpu.Stats)
+	rt.sConn.Write([]byte("1|-|-$"))
+	rt.sConn.Write([]byte("z|1|0$"))
+	if rt.cfg.Stats.CPU.Enabled {
+		cw = cpu.NewWatcher().GetStats(rt.ctx, interval)
+		logrus.Info("router: CPU watcher started")
+	}
+
+	mw := make(<-chan *mem.Stats)
+	rt.sConn.Write([]byte("2|-|-$"))
+	rt.sConn.Write([]byte("z|2|0$"))
+	if rt.cfg.Stats.Memory.Enabled {
+		mw = mem.NewWatcher().GetStats(rt.ctx, interval)
+		logrus.Info("router: memory watcher started")
+	}
+
+	gw := make(<-chan *gpu.Stats)
+	rt.sConn.Write([]byte("3|-|-$"))
+	rt.sConn.Write([]byte("z|3|0$"))
+	if rt.cfg.Stats.GPU.Enabled {
+		gw = gpu.NewWatcher().GetStats(rt.ctx, interval)
+		logrus.Info("router: gpu watcher started")
+	}
+
+	nw := make(<-chan *net.Stats)
+	rt.sConn.Write([]byte("4|-|-$"))
+	rt.sConn.Write([]byte("z|4|0$"))
+	if rt.cfg.Stats.Network.Enabled {
+		nw = net.NewWatcher().GetStats(rt.ctx, interval)
+		logrus.Info("router: network watcher started")
+	}
 
 	// Flags holds current alert status (ON/OFF)
-	cwa, mwa, nwa := false, false, false
+	cwa, mwa, gwa, nwa := false, false, false, false
 	// Flags holds alert status of each alert threshold
-	cwParms, mwParms, nwParms := make([]bool, 2), make([]bool, 1), make([]bool, 2)
+	cwParms, mwParms, gwParms, nwParms := make([]bool, 2), make([]bool, 1), make([]bool, 2), make([]bool, 2)
 	for {
 		select {
 		case s := <-cw:
@@ -124,6 +153,15 @@ func (rt *Router) WatchStats() {
 			}
 			checkThreshold(rt.cfg.Stats.Memory.LoadThreshold, uint(s.Load), mwParms, 0)
 			alert(rt.sConn, mwParms, &mwa, atMemory)
+		case s := <-gw:
+			cmd := fmt.Sprintf("3|%d|%d$", s.Load, s.Mem)
+			logrus.Debugf("GPU: %s", cmd)
+			if _, err := rt.sConn.Write([]byte(cmd)); err != nil {
+				logrus.Errorf("GPU: failed to write stats to Arduino: %s", cmd)
+			}
+			checkThreshold(rt.cfg.Stats.GPU.LoadThreshold, uint(s.Load), gwParms, 0)
+			checkThreshold(rt.cfg.Stats.GPU.MemThreshold, uint(s.Mem), gwParms, 1)
+			alert(rt.sConn, gwParms, &gwa, atGPU)
 		case s := <-nw:
 			cmd := fmt.Sprintf("4|%d|%d$", s.Download, s.Upload)
 			logrus.Debugf("NET: %s", cmd)
@@ -134,6 +172,7 @@ func (rt *Router) WatchStats() {
 			checkThreshold(rt.cfg.Stats.Network.UploadThreshold, uint(s.Upload), nwParms, 1)
 			alert(rt.sConn, nwParms, &nwa, atNetwork)
 		case <-rt.ctx.Done():
+			// TODO
 			return
 		}
 	}
@@ -222,6 +261,11 @@ func (rt *Router) UpdateConfig(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	if !ard.Stats.CPU.Enabled && !ard.Stats.Memory.Enabled && !ard.Stats.GPU.Enabled && !ard.Stats.Network.Enabled {
+		http.Error(w, "At least one system statistics must be enabled", http.StatusBadRequest)
+		return
+	}
+
 	tmpArd := rt.cfg.Arduino
 	rt.cfg.Arduino = ard
 	if _, err := rt.cfg.WriteToFile(""); err != nil {
@@ -233,19 +277,19 @@ func (rt *Router) UpdateConfig(w http.ResponseWriter, r *http.Request) {
 
 	// Kill old watchers and Arduino connection then spawn new ones by new config
 	rt.Stop()
-	ctx, cancel := context.WithCancel(context.Background())
-	rt.ctx = ctx
-	rt.cancel = cancel
 	rt.sConn = newSerialConn(*rt.cfg)
-	if rt.sConn != nil {
-		go rt.WatchStats()
+	if rt.sConn == nil {
+		http.Error(w, "Invalid serial configuration", http.StatusBadRequest)
+		return
 	}
+	rt.ctx, rt.cancel = context.WithCancel(context.Background())
+	go rt.WatchStats()
 	render.JSON(w, r, "Ok")
 }
 
 func (rt *Router) ReloadTemplate(w http.ResponseWriter, r *http.Request) {
 	var err error
-	indexPage , err = ioutil.ReadFile(path.Join(util.GetWd(), "web", "index.html"))
+	indexPage, err = ioutil.ReadFile(path.Join(util.GetWd(), "web", "index.html"))
 	if err != nil {
 		logrus.Fatalf("router: failed to load index page: %s", err)
 	}

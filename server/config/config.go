@@ -11,8 +11,8 @@ import (
 
 type (
 	Config struct {
-		Server `json:"server"`
-		Admin  `json:"admin"`
+		Server  `json:"server"`
+		Admin   `json:"admin"`
 		Arduino `json:"arduino"`
 	}
 
@@ -76,14 +76,6 @@ type (
 )
 
 func LoadFromFile(fp string) *Config {
-	if fp == "" {
-		fp = path.Join(util.GetWd(), "nights_watch.conf") // Default path
-	}
-	b, err := ioutil.ReadFile(fp)
-	if err != nil {
-		logrus.Fatalf("failed to open config file: %s", err)
-	}
-
 	// Default config values
 	cfg := Config{
 		Server: Server{
@@ -107,9 +99,21 @@ func LoadFromFile(fp string) *Config {
 			},
 		},
 	}
+
+	if fp == "" {
+		fp = path.Join(util.GetWd(), "nights_watch.conf") // Default path
+	}
+	b, err := ioutil.ReadFile(fp)
+	if err != nil {
+		logrus.Errorf("config: failed to open config file: %s", err)
+		logrus.Warn("=> All configurations will be reset to default!")
+		return &cfg
+	}
+
 	if err = json.Unmarshal(b, &cfg); err != nil {
 		logrus.Fatalf("failed to parse config file: %v", err)
 	}
+	logrus.Infof("config: config file %s loaded", fp)
 	return &cfg
 }
 
@@ -124,6 +128,6 @@ func (cfg *Config) WriteToFile(fp string) (string, error) {
 	if util.WriteToFile(fp, b) != nil {
 		return "", err
 	}
-	logrus.Infof("config: wrote configuration to %s", fp)
+	logrus.Infof("config: config file written to %s", fp)
 	return fp, nil
 }

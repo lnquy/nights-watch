@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	"github.com/tarm/serial"
 	"github.com/lnquy/nights-watch/server/config"
 	"github.com/go-chi/chi"
 	"net/http"
