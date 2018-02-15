@@ -186,7 +186,19 @@ func (rt *Router) GetConfig(w http.ResponseWriter, r *http.Request) {
 }
 
 func (rt *Router) UpdateConfig(w http.ResponseWriter, r *http.Request) {
-
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	ard := config.Arduino{}
+	if err = json.Unmarshal(b, &ard); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	rt.cfg.Arduino = ard
+	// TODO: Kill old watchers and Arduino connection then spawn new ones by new config
+	render.JSON(w, r, "Ok")
 }
 
 func (rt *Router) ReloadTemplate(w http.ResponseWriter, r *http.Request) {

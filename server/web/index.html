@@ -24,7 +24,7 @@
         <img src="static/img/nw.png" width="40"/>
         <v-toolbar-title class="white--text light-font hidden-xs-only">Night's Watch</v-toolbar-title>
         <v-spacer></v-spacer>
-        <v-btn class="mr-0" color="info" @click="" :disabled="!isConfigChanged">
+        <v-btn class="mr-0" color="info" @click="" :disabled="!isConfigChanged" :loading="btnLoading" @click.native="saveConfig">
           <v-icon small>save</v-icon>
           &nbsp;&nbsp;Save
         </v-btn>
@@ -224,7 +224,7 @@
       <!--Snackbar-->
       <v-snackbar v-model="snb.show" :timeout="snb.timeout" :color="snb.color" top>
         <span class="text--white">{{ snb.msg }}</span>
-        <v-btn flat color="secondary" @click.native="snb.show = false">Close</v-btn>
+        <v-btn flat color="grey lighten-2" @click.native="snb.show = false">Close</v-btn>
       </v-snackbar>
     </v-content>
   </v-app>
@@ -304,6 +304,7 @@
         {text: '5 minutes', value: 300}
       ],
       isConfigChanged: false,
+      btnLoading: false,
       snb: {
         show: false,
         timeout: 3500,
@@ -328,7 +329,7 @@
               self.cfg = res.data;
               setTimeout(function() {
                 self.isConfigChanged = false;
-                self.showSnackbar('success', 'Configuration loaded successfully');
+                self.showSnackbar('success', 'Configuration loaded');
               }, 100);
             })
             .catch(function (err) {
@@ -351,6 +352,22 @@
             .catch(function (err) {
               self.showSnackbar('error', 'Failed to refresh serial ports list');
               console.log('SERIAL', err);
+            });
+      },
+      saveConfig: function() {
+        var self = this;
+        self.btnLoading = true;
+        axios.post('/api/v1/config', self.cfg)
+            .then(function (res) {
+              self.showSnackbar('success', 'Configuration saved');
+              self.isConfigChanged = false;
+              self.btnLoading = false;
+            })
+            .catch(function (err) {
+              self.isConfigChanged = true;
+              self.btnLoading = false;
+              self.showSnackbar('error', 'Failed to save configuration');
+              console.log('SAVE CONFIG', err);
             });
       },
       showSnackbar: function(type, msg, timeout) {
