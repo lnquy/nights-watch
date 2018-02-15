@@ -41,26 +41,14 @@ func main() {
 		logrus.Fatalf("main: failed to write config to file: %s", err)
 	}
 
-	logrus.Infof("main: connecting to Arduino on %s@%d", cfg.Serial.Port, cfg.Serial.Baud)
-	serialConn, err := serial.OpenPort(&serial.Config{
-		Name: cfg.Serial.Port,
-		Baud: int(cfg.Serial.Baud),
-	})
-	if err != nil {
-		logrus.Fatal(err)
-	}
-	time.Sleep(1 * time.Second) // Sleep since Arduino will restart when new connection connected
-	logrus.Infof("main: Arduino connected")
-	// TODO: Write config here
-
 	logrus.Infof("main: starting web server")
 	r := chi.NewRouter()
 	r.Use(middleware.DefaultLogger)
 	r.Use(middleware.DefaultCompress)
 	r.Use(middleware.Recoverer)
 
-	handler := router.New(cfg, serialConn)
-	go handler.WatchStats()
+	// Initialize router and start watchers if possible
+	handler := router.New(cfg)
 
 	// Routing
 	dir := path.Join(util.GetWd(), "web", "static")

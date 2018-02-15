@@ -54,17 +54,39 @@ func init() {
 	}
 }
 
-func New(cfg *config.Config, sConn *serial.Port) *Router {
+func New(cfg *config.Config) *Router {
 	ctx, cancel := context.WithCancel(context.Background())
-	return &Router {
+	r := &Router {
 		cfg: cfg,
-		sConn: sConn,
+		sConn: newSerialConn(*cfg),
 		ctx: ctx,
 		cancel: cancel,
 	}
+	if r.sConn != nil {
+		go r.WatchStats() // Start watchers
+	}
+	return r
 }
 
-// First character dertermines the command type:
+func newSerialConn(cfg config.Config) *serial.Port {
+	logrus.Infof("router: connecting to Arduino on %s@%d", cfg.Serial.Port, cfg.Serial.Baud)
+	serialConn, err := serial.OpenPort(&serial.Config{
+		Name: cfg.Serial.Port,
+		Baud: int(cfg.Serial.Baud),
+	})
+	if err != nil {
+		logrus.Errorf("router: failed to connect to Arduino on %s@%d: %s", cfg.Serial.Port, cfg.Serial.Baud, err)
+		logrus.Warnf("        => Please define the serial config in config file or configure via web page!", cfg.Serial.Port, cfg.Serial.Baud, err)
+		return nil
+	}
+
+	// Sleep since Arduino will restart when new connection connected
+	time.Sleep(300 * time.Millisecond)
+	logrus.Infof("router: Arduino connected")
+	return serialConn
+}
+
+// First character determines the command type:
 // 0: Config
 // 1: CPU stats
 // 2: Memory stats
@@ -118,10 +140,14 @@ func (rt *Router) WatchStats() {
 }
 
 func (rt *Router) Stop() {
-	rt.cancel()
-	logrus.Infof("router: watchers stopped")
-	rt.sConn.Close()
-	logrus.Infof("router: Arduino connection closed")
+	if rt.cancel != nil {
+		rt.cancel()
+		logrus.Infof("router: watchers stopped")
+	}
+	if rt.sConn != nil {
+		rt.sConn.Close()
+		logrus.Infof("router: Arduino connection closed")
+	}
 }
 
 func checkThreshold(threshold, value uint, parms []bool, idx int) {
@@ -196,8 +222,24 @@ func (rt *Router) UpdateConfig(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	tmpArd := rt.cfg.Arduino
 	rt.cfg.Arduino = ard
-	// TODO: Kill old watchers and Arduino connection then spawn new ones by new config
+	if _, err := rt.cfg.WriteToFile(""); err != nil {
+		rt.cfg.Arduino = tmpArd // Fall back to old config
+		logrus.Errorf("router: failed to write config to file: %s", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Kill old watchers and Arduino connection then spawn new ones by new config
+	rt.Stop()
+	ctx, cancel := context.WithCancel(context.Background())
+	rt.ctx = ctx
+	rt.cancel = cancel
+	rt.sConn = newSerialConn(*rt.cfg)
+	if rt.sConn != nil {
+		go rt.WatchStats()
+	}
 	render.JSON(w, r, "Ok")
 }
 
