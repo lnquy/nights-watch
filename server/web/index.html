@@ -300,13 +300,13 @@
       </v-dialog>
 
       <!--About modal-->
-      <v-dialog v-model="aboutModal" max-width="600">
+      <v-dialog v-model="aboutModal" max-width="550">
         <v-card>
           <v-card-title class="headline">Night's Watch</v-card-title>
           <v-card-text class="py-0">
             <v-layout row wrap>
               <v-flex class="xs12">
-                <p class="body-1 text--secondary">Night's Watch is a toy project simply monitoring the system statistics (CPU, memory, GPU and network I/O) and display those data on an external LCD via Arduino UNO board.<br>
+                <p class="body-1 text--secondary">Night's Watch is a toy project simply monitoring system statistics (CPU, memory, GPU and network I/O) and displays those data on an external LCD via Arduino UNO board.<br>
                   Source code and documentation can be found on Github: <a href="https://github.com/lnquy/nights-watch">https://github.com/lnquy/nights-watch</a><br>
                   All contributions to this project are welcome.
                 </p>
@@ -400,8 +400,9 @@
         }
       },
       menus: [
+        {icon: 'keyboard_return', text: 'Logout'},
         {icon: 'language', text: 'Languages'},
-        {icon: 'keyboard_return', text: 'Logout'}
+        {icon: 'account_circle', text: 'Administrator'}
       ],
       slSerialPorts: [],
       slSerialBauds: [
@@ -516,24 +517,27 @@
       clickMenuItem: function(idx) {
         var self = this;
         switch (idx) {
-          case 0: // Languages
-            alert('Nothing here yet :)')
-            return;
-          case 1: // Logout
-            if (!this.uid) {
+          case 0: // Logout
+            if (!this.uid || this.uid === "guest") {
               return;
             }
             axios.get('/logout')
-                .then(function (res) {
-                  self.showSnackbar('success', 'Goodbye friend!');
-                  setTimeout(function() {
-                    location.reload();
-                  }, 1000);
-                })
-                .catch(function (err) {
-                  self.showSnackbar('error', 'Logout failed: ' + err.response.data);
-                  console.log('LOGOUT', err.response);
-                });
+              .then(function (res) {
+                self.showSnackbar('success', 'Goodbye friend!');
+                setTimeout(function() {
+                  location.reload();
+                }, 1000);
+              })
+              .catch(function (err) {
+                self.showSnackbar('error', 'Logout failed: ' + err.response.data);
+                console.log('LOGOUT', err.response);
+              });
+            return;
+          case 1: // Languages
+            alert('Nothing here yet :)');
+            return;
+          case 2:
+            alert('Nothing here yet :)');
             return;
         }
       },

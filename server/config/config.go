@@ -23,8 +23,10 @@ type (
 	}
 
 	Admin struct {
-		Username string `json:"username"`
-		Password string `json:"password"`
+		// User must login to able to configure via web page if this flag is true
+		ForceLogin bool   `json:"force_login"`
+		Username   string `json:"username"`
+		Password   string `json:"password"`
 	}
 
 	Arduino struct {

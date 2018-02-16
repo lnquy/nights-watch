@@ -277,6 +277,29 @@ func (rt *Router) Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (rt *Router) GetIndexPage(w http.ResponseWriter, r *http.Request) {
+	if !rt.cfg.Admin.ForceLogin {
+		// Allow anonymous to configure via webpage.
+		// Check if nightswatch_uid cookie available or not, if not then write new guest cookie
+		// so frontend can behave normally.
+		if _, err := r.Cookie("nightswatch_uid"); err != nil {
+			http.SetCookie(w, &http.Cookie{
+				Name: "nightswatch_uid",
+				Value: "guest",
+				MaxAge: 7 * 24 * 3600,
+			})
+		}
+	} else {
+		// Force administrator to login before configuring anything.
+		// Check if nightswatch_uid cookie available or not, if available and is a "guest" cookie then
+		// delete it so frontend will require login again.
+		if c, err := r.Cookie("nightswatch_uid"); err == nil && c.Value == "guest" {
+			http.SetCookie(w, &http.Cookie{
+				Name: "nightswatch_uid",
+				Value: "guest",
+				Expires: time.Unix(0, 0),
+			})
+		}
+	}
 	w.Write(indexPage)
 }
 
@@ -350,9 +373,21 @@ func (rt *Router) ReloadTemplate(w http.ResponseWriter, r *http.Request) {
 // Middleware
 func (rt *Router) Authentication(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		if uid, err := sm.Load(r).GetString("uid"); err != nil || uid == "" {
-			http.Error(w, "Please login first", http.StatusUnauthorized)
-			return
+		if rt.cfg.Admin.ForceLogin {
+			if uid, err := sm.Load(r).GetString("uid"); err != nil || uid == "" {
+				http.Error(w, "Please login first", http.StatusUnauthorized)
+				return
+			}
+		} else {
+			// Check if nightswatch_uid cookie available or not, if not then write new guest cookie
+			// so frontend can behave as normal
+			if _, err := r.Cookie("nightswatch_uid"); err != nil {
+				http.SetCookie(w, &http.Cookie{
+					Name: "nightswatch_uid",
+					Value: "guest",
+					MaxAge: 7 * 24 * 3600,
+				})
+			}
 		}
 		next.ServeHTTP(w, r)
 	}
