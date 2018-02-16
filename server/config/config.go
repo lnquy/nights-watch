@@ -49,8 +49,10 @@ type (
 	}
 
 	Sleep struct {
-		Start string `json:"start"`
-		End   string `json:"end"`
+		Start            string `json:"start"`
+		End              string `json:"end"`
+		NormalBrightness uint   `json:"normalBrightness"`
+		SleepBrightness  uint   `json:"sleepBrightness"`
 	}
 
 	CPU struct {
@@ -95,6 +97,7 @@ func LoadFromFile(fp string) *Config {
 			Sleep: Sleep{
 				Start: "00:00",
 				End:   "00:00",
+				NormalBrightness: 85,
 			},
 			Stats: Stats{
 				Interval: 1,

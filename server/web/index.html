@@ -230,7 +230,7 @@
                 </v-layout>
               </v-card-title>
               <v-card-text class="pt-0">
-                <v-layout>
+                <v-layout row wrap>
                   <v-flex class="xs6 pr-3">
                     <v-menu ref="startMenu" lazy :close-on-content-click="false" transition="scale-transition"
                             offset-y full-width :nudge-right="40" max-width="290px" min-width="290px"
@@ -256,6 +256,22 @@
                       <v-time-picker v-model="cfg.sleep.end"
                                      @change="$refs.endMenu.save(cfg.sleep.end)"></v-time-picker>
                     </v-menu>
+                  </v-flex>
+                  <v-flex class="xs6 pr-3">
+                    <v-text-field class="vtf-right" type="number" min="1" max="100" label="Normal brightness"
+                                  v-model="cfg.sleep.normalBrightness" suffix="%" :disabled="!uid"
+                                  :error-messages="errors.collect('normal brightness')" data-vv-name="normal brightness"
+                                  v-validate="'required|min_value:1|max_value:100'" data-vv-scope="cfgForm"
+                                  prepend-icon="brightness_high">
+                    </v-text-field>
+                  </v-flex>
+                  <v-flex class="xs6">
+                    <v-text-field class="vtf-right" type="number" min="0" max="100" label="Sleep brightness"
+                                  v-model="cfg.sleep.sleepBrightness" suffix="%" :disabled="!uid"
+                                  :error-messages="errors.collect('sleep brightness')" data-vv-name="sleep brightness"
+                                  v-validate="'required|min_value:0|max_value:100'" data-vv-scope="cfgForm"
+                                  prepend-icon="brightness_3">
+                    </v-text-field>
                   </v-flex>
                 </v-layout>
       </v-container>
@@ -396,7 +412,9 @@
         },
         sleep: {
           start: '00:00',
-          end: '00:00'
+          end: '00:00',
+          normalBrightness: 85,
+          sleepBrightness: 0
         }
       },
       menus: [
