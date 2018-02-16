@@ -21,6 +21,7 @@ void setup() {
  *     + 2: Memory stats
  *     + 3: GPU stats
  *     + 4: Network stats
+ *     + y: Display brightness
  *     + z: Alert
  *   - Depends on command type, there may have one or many values.
  *     Values are separated by | character.
@@ -78,6 +79,11 @@ void outputToLCD(String input) {
       String down = getValue(input, '|', 1);
       String up = getValue(input, '|', 2);
       myNextion.setComponentText("net0", down + "/" + up + "KBps");
+      break;
+    }
+    case 'y': { // Display brightness
+      String val = getValue(input, '|', 1);
+      myNextion.sendCommand(string2char("dim=" + val));
       break;
     }
     case 'z': // Alert
