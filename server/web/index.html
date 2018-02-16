@@ -38,7 +38,7 @@
               <v-list-tile-title>{{ m.text}}</v-list-tile-title>
             </v-list-tile>
             <v-divider></v-divider>
-            <v-list-tile @click="">
+            <v-list-tile @click="aboutModal = true">
               <v-icon>info_outline &nbsp;&nbsp;&nbsp;</v-icon>
               <v-list-tile-title>About</v-list-tile-title>
             </v-list-tile>
@@ -298,6 +298,31 @@
           </v-card-actions>
         </v-card>
       </v-dialog>
+
+      <!--About modal-->
+      <v-dialog v-model="aboutModal" max-width="600">
+        <v-card>
+          <v-card-title class="headline">Night's Watch</v-card-title>
+          <v-card-text class="py-0">
+            <v-layout row wrap>
+              <v-flex class="xs12">
+                <p class="body-1 text--secondary">Night's Watch is a toy project simply monitoring the system statistics (CPU, memory, GPU and network I/O) and display those data on an external LCD via Arduino UNO board.<br>
+                  Source code and documentation can be found on Github: <a href="https://github.com/lnquy/nights-watch">https://github.com/lnquy/nights-watch</a><br>
+                  All contributions to this project are welcome.
+                </p>
+                <p class="subheading">Author</p>
+                <p class="body-1 text--secondary">Quy Le (@lnquy) - lnquy.it@gmailcom</p>
+                <p class="subheading">License</p>
+                <p class="body-1 text--secondary">This project is licensed under the <a href="https://github.com/lnquy/nights-watch/blob/master/LICENSE">MIT License</a>.</p>
+              </v-flex>
+            </v-layout>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="info" @click.native="aboutModal = false">Ok</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
       </v-layout>
     </v-content>
   </v-app>
@@ -419,6 +444,7 @@
         username: '',
         password: ''
       },
+      aboutModal: false,
       uid: ''
     },
     watch: {
