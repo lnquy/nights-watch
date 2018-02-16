@@ -8,6 +8,15 @@
   revision = "5d049714c4a64225c3c79a7cf7d02f7fb5b96338"
 
 [[projects]]
+  name = "github.com/alexedwards/scs"
+  packages = [
+    ".",
+    "stores/cookiestore"
+  ]
+  revision = "c052ae9a41ed2ac33e3ca2b8d44309f20aab81e2"
+  version = "v1.2.0"
+
+[[projects]]
   name = "github.com/go-chi/chi"
   packages = [
     ".",
@@ -42,17 +51,13 @@
   packages = [
     "cpu",
     "host",
+    "internal/common",
     "mem",
-    "net"
+    "net",
+    "process"
   ]
   revision = "c432be29ccce470088d07eea25b3ea7e68a8afbb"
   version = "v2.18.01"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/shirou/w32"
-  packages = ["."]
-  revision = "bb4de0191aa41b5507caa14b0650cdbddcd9280b"
 
 [[projects]]
   name = "github.com/sirupsen/logrus"
@@ -69,7 +74,12 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
-  packages = ["ssh/terminal"]
+  packages = [
+    "nacl/secretbox",
+    "poly1305",
+    "salsa20/salsa",
+    "ssh/terminal"
+  ]
   revision = "5119cf507ed5294cc409c092980c7497ee5d6fd2"
 
 [[projects]]
@@ -84,6 +94,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "1393a00243ca1d50adcd5ca7a8c2fcc2691a764450a0c81d325fe70074443e78"
+  inputs-digest = "b7d831f86b751d715e4117ecb65100af8e0156a78c3ebfbb962187e37e1cbd24"
   solver-name = "gps-cdcl"
   solver-version = 1

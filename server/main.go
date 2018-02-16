@@ -54,11 +54,14 @@ func main() {
 	fileServer(r, "/static", http.Dir(dir))
 	r.Get("/", handler.GetIndexPage)
 	r.Get("/favicon.ico", handler.Favicon)
+	r.Post("/login", handler.Login)
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Route("/serial", func(r chi.Router) {
+			r.Use(handler.Authentication)
 			r.Get("/", handler.GetCOMPorts)
 		})
 		r.Route("/config", func(r chi.Router) {
+			r.Use(handler.Authentication)
 			r.Get("/", handler.GetConfig)
 			r.Post("/", handler.UpdateConfig)
 		})
@@ -70,7 +73,7 @@ func main() {
 	addr := fmt.Sprintf("%s:%d", cfg.Server.IP, cfg.Server.Port)
 	server := &http.Server{
 		Addr:         addr,
-		Handler:      cors.Default().Handler(r), // TODO: Dev only
+		Handler:      cors.Default().Handler(handler.GetSessionManager().Use(r)), // TODO: Dev only
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}

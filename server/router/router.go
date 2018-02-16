@@ -28,6 +28,11 @@ type (
 		cancel context.CancelFunc
 	}
 
+	Login struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+
 	alertType int
 )
 
@@ -235,6 +240,29 @@ func (rt *Router) Favicon(w http.ResponseWriter, r *http.Request) {
 	w.Write(favicon)
 }
 
+func (rt *Router) Login(w http.ResponseWriter, r *http.Request) {
+	lg := Login{}
+	if err := json.NewDecoder(r.Body).Decode(&lg); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if lg.Username != rt.cfg.Admin.Username || lg.Password != rt.cfg.Admin.Password {
+		http.Error(w, "Invalid username/password", http.StatusBadRequest)
+		return
+	}
+
+	if err := sm.Load(r).PutString(w, "uid", rt.cfg.Admin.Username); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	http.SetCookie(w, &http.Cookie{
+		Name: "nightswatch_uid",
+		Value: rt.cfg.Admin.Username,
+		MaxAge: 7 * 24 * 3600,
+	})
+	render.JSON(w, r, "Ok")
+}
+
 func (rt *Router) GetIndexPage(w http.ResponseWriter, r *http.Request) {
 	w.Write(indexPage)
 }
@@ -304,4 +332,16 @@ func (rt *Router) ReloadTemplate(w http.ResponseWriter, r *http.Request) {
 		logrus.Fatalf("router: failed to load index page: %s", err)
 	}
 	w.Write([]byte("Ok"))
+}
+
+// Middleware
+func (rt *Router) Authentication(next http.Handler) http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		if uid, err := sm.Load(r).GetString("uid"); err != nil || uid == "" {
+			http.Error(w, "Please login first", http.StatusUnauthorized)
+			return
+		}
+		next.ServeHTTP(w, r)
+	}
+	return http.HandlerFunc(fn)
 }

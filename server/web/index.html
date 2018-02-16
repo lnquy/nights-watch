@@ -24,7 +24,7 @@
         <img src="static/img/nw.png" width="40"/>
         <v-toolbar-title class="white--text light-font hidden-xs-only">Night's Watch</v-toolbar-title>
         <v-spacer></v-spacer>
-        <v-btn class="mr-0" color="info" @click="" :disabled="!isConfigChanged" :loading="btnLoading" @click.native="saveConfig">
+        <v-btn class="mr-0" color="info" @click="" :disabled="!isConfigChanged || !uid" :loading="btnLoading" @click.native="saveConfig">
           <v-icon small>save</v-icon>
           &nbsp;&nbsp;Save
         </v-btn>
@@ -60,7 +60,8 @@
                       <span>Configure the serial port which connects to Arduino board.<br/>Also the baud rate (default 9600).</span>
                     </v-tooltip>
                     <v-tooltip top>
-                      <v-btn class="ma-0" flat fab small style="float: right" @click="loadSerialPorts(true)" slot="activator">
+                      <v-btn class="ma-0" flat fab small style="float: right" @click="loadSerialPorts(true)"
+                             slot="activator" :disabled="!uid">
                         <v-icon>refresh</v-icon>
                       </v-btn>
                       <span>Refresh serial ports</span>
@@ -75,16 +76,18 @@
                     <v-select
                         :items="slSerialPorts" v-model="cfg.serial.port" label="Select serial port" single-line
                         bottom light solo required no-data-text="No serial ports found"
-                        hint="Serial Port" persistent-hint
-                        :error-messages="errors.collect('serial port')" v-validate="'required'" data-vv-name="serial port">
+                        hint="Serial Port" persistent-hint :disabled="!uid"
+                        :error-messages="errors.collect('serial port')" v-validate="'required'"
+                        data-vv-name="serial port" data-vv-scope="cfgForm">
                     </v-select>
                   </v-flex>
                   <v-flex class="xs5 sm3">
                     <span class="sp-sec text--secondary">Baud Rate</span><br>
                     <v-select
                         :items="slSerialBauds" v-model="cfg.serial.baud" label="Select baud rate" single-line
-                        bottom light solo required hint="Baud Rate" persistent-hint
-                        :error-messages="errors.collect('baud rate')" v-validate="'required'" data-vv-name="baud rate">
+                        bottom light solo required hint="Baud Rate" persistent-hint  :disabled="!uid"
+                        :error-messages="errors.collect('baud rate')" v-validate="'required'"
+                        data-vv-name="baud rate" data-vv-scope="cfgForm">
                     </v-select>
                   </v-flex>
                 </v-layout>
@@ -115,83 +118,91 @@
                     <span class="sp-sec text--secondary">Refresh Interval</span><br>
                     <v-select
                         :items="slIntervals" v-model="cfg.stats.interval" label="Select refresh interval" single-line
-                        bottom light solo required hint="Refresh interval" persistent-hint
-                        :error-messages="errors.collect('refresh interval')" v-validate="'required'" data-vv-name="refresh interval">
+                        bottom light solo required hint="Refresh interval" persistent-hint :disabled="!uid"
+                        :error-messages="errors.collect('refresh interval')" v-validate="'required'"
+                        data-vv-name="refresh interval" data-vv-scope="cfgForm">
                     </v-select>
                   </v-flex>
                 </v-layout>
                 <v-divider class="mt-4 mb-4"></v-divider>
                 <v-layout row wrap class="mt-3">
                   <v-flex xs12>
-                    <v-switch class="sw-subheading" color="green accent-3" label="CPU" v-model="cfg.stats.cpu.enabled"></v-switch>
+                    <v-switch class="sw-subheading" color="green accent-3" label="CPU"
+                              v-model="cfg.stats.cpu.enabled" :disabled="!uid"></v-switch>
                   </v-flex>
                   <v-flex xs6 class="pr-3 mt-n1">
                     <v-text-field class="vtf-right" type="number" min="0" max="100" label="Load threshold"
-                                  v-model="cfg.stats.cpu.load" suffix="%" :disabled="!cfg.stats.cpu.enabled"
+                                  v-model="cfg.stats.cpu.load" suffix="%" :disabled="!cfg.stats.cpu.enabled || !uid"
                                   :error-messages="errors.collect('CPU load')" data-vv-name="CPU load"
-                                  v-validate="'required|min_value:0|max_value:100'" >
+                                  v-validate="'required|min_value:0|max_value:100'" data-vv-scope="cfgForm">
                     </v-text-field>
                   </v-flex>
                   <v-flex xs6 class="mt-n1">
                     <v-text-field class="vtf-right" type="number" min="0" max="100" label="Temperature threshold"
-                                  v-model="cfg.stats.cpu.temp" suffix="°C" :disabled="!cfg.stats.cpu.enabled"
+                                  v-model="cfg.stats.cpu.temp" suffix="°C" :disabled="!cfg.stats.cpu.enabled || !uid"
                                   :error-messages="errors.collect('CPU temperature')" data-vv-name="CPU temperature"
-                                  v-validate="'required|min_value:0|max_value:100'" >
+                                  v-validate="'required|min_value:0|max_value:100'" data-vv-scope="cfgForm">
                     </v-text-field>
                   </v-flex>
                 </v-layout>
 
                 <v-layout row wrap class="mt-3">
                   <v-flex xs12>
-                    <v-switch class="sw-subheading" color="green accent-3" label="Memory" v-model="cfg.stats.memory.enabled"></v-switch>
+                    <v-switch class="sw-subheading" color="green accent-3" label="Memory"
+                              v-model="cfg.stats.memory.enabled" :disabled="!uid"></v-switch>
                   </v-flex>
                   <v-flex class="xs12 mt-n1">
                     <v-text-field class="vtf-right" type="number" min="0" max="100" label="Load threshold"
-                                  v-model="cfg.stats.memory.load" suffix="%" :disabled="!cfg.stats.memory.enabled"
+                                  v-model="cfg.stats.memory.load" suffix="%"
+                                  :disabled="!cfg.stats.memory.enabled || !uid"
                                   :error-messages="errors.collect('memory load')" data-vv-name="memory load"
-                                  v-validate="'required|min_value:0|max_value:100'" >
+                                  v-validate="'required|min_value:0|max_value:100'" data-vv-scope="cfgForm">
                     </v-text-field>
                   </v-flex>
                 </v-layout>
 
                 <v-layout row wrap class="mt-3">
                   <v-flex xs12>
-                    <v-switch class="sw-subheading" color="green accent-3" label="GPU" v-model="cfg.stats.gpu.enabled"></v-switch>
+                    <v-switch class="sw-subheading" color="green accent-3" label="GPU"
+                              v-model="cfg.stats.gpu.enabled" :disabled="!uid"></v-switch>
                   </v-flex>
                   <v-flex class="xs6 pr-3 mt-n1">
                     <v-text-field class="vtf-right" type="number" min="0" max="100" label="Load threshold"
-                                  v-model="cfg.stats.gpu.load" suffix="%" :disabled="!cfg.stats.gpu.enabled"
+                                  v-model="cfg.stats.gpu.load" suffix="%"
+                                  :disabled="!cfg.stats.gpu.enabled || !uid"
                                   :error-messages="errors.collect('GPU load')" data-vv-name="GPU load"
-                                  v-validate="'required|min_value:0|max_value:100'" >
+                                  v-validate="'required|min_value:0|max_value:100'" data-vv-scope="cfgForm">
                     </v-text-field>
                   </v-flex>
                   <v-flex class="xs6 mt-n1">
                     <v-text-field class="vtf-right" type="number" min="0" max="100000" label="GPU memory threshold"
-                                  v-model="cfg.stats.gpu.mem" suffix="MB" :disabled="!cfg.stats.gpu.enabled"
+                                  v-model="cfg.stats.gpu.mem" suffix="MB"
+                                  :disabled="!cfg.stats.gpu.enabled || !uid"
                                   :error-messages="errors.collect('GPU memory')" data-vv-name="GPU memory"
-                                  v-validate="'required|min_value:0|max_value:100000'" >
+                                  v-validate="'required|min_value:0|max_value:100000'" data-vv-scope="cfgForm">
                     </v-text-field>
                   </v-flex>
                 </v-layout>
 
                 <v-layout row wrap class="mt-3">
                   <v-flex xs12>
-                    <v-switch class="sw-subheading" color="green accent-3" label="Network" v-model="cfg.stats.network.enabled"></v-switch>
+                    <v-switch class="sw-subheading" color="green accent-3" label="Network"
+                              v-model="cfg.stats.network.enabled" :disabled="!uid"></v-switch>
                   </v-flex>
                   <v-flex class="xs6 pr-3 mt-n1">
                     <v-text-field class="vtf-right" type="number" min="0" max="1000000" label="Download threshold"
                                   v-model="cfg.stats.network.download" suffix="KB/s"
-                                  :disabled="!cfg.stats.network.enabled"
+                                  :disabled="!cfg.stats.network.enabled || !uid"
                                   :error-messages="errors.collect('download speed')" data-vv-name="download speed"
-                                  v-validate="'required|min_value:0|max_value:1000000'" >
+                                  v-validate="'required|min_value:0|max_value:1000000'" data-vv-scope="cfgForm">
                     </v-text-field>
                   </v-flex>
                   <v-flex class="xs6 mt-n1">
                     <v-text-field class="vtf-right" type="number" min="0" max="1000000" label="Upload threshold"
                                   v-model="cfg.stats.network.upload" suffix="KB/s"
-                                  :disabled="!cfg.stats.network.enabled"
+                                  :disabled="!cfg.stats.network.enabled || !uid"
                                   :error-messages="errors.collect('upload speed')" data-vv-name="upload speed"
-                                  v-validate="'required|min_value:0|max_value:1000000'" >
+                                  v-validate="'required|min_value:0|max_value:1000000'" data-vv-scope="cfgForm">
                     </v-text-field>
                   </v-flex>
                 </v-layout>
@@ -225,9 +236,9 @@
                             offset-y full-width :nudge-right="40" max-width="290px" min-width="290px"
                             :return-value.sync="cfg.sleep.start">
                       <v-text-field slot="activator" label="Pick start time" v-model="cfg.sleep.start"
-                                    prepend-icon="timer" readonly
+                                    prepend-icon="timer" readonly :disabled="!uid"
                                     :error-messages="errors.collect('sleepStart')" data-vv-name="sleepStart"
-                                    v-validate="'required'" >
+                                    v-validate="'required'" data-vv-scope="cfgForm">
                       </v-text-field>
                       <v-time-picker v-model="cfg.sleep.start"
                                      @change="$refs.startMenu.save(cfg.sleep.start)"></v-time-picker>
@@ -238,9 +249,9 @@
                             offset-y full-width :nudge-right="40" max-width="290px" min-width="290px"
                             :return-value.sync="cfg.sleep.end">
                       <v-text-field slot="activator" label="Pick end time" v-model="cfg.sleep.end"
-                                    prepend-icon="timer_off" readonly
+                                    prepend-icon="timer_off" readonly :disabled="!uid"
                                     :error-messages="errors.collect('sleepEnd')" data-vv-name="sleepEnd"
-                                    v-validate="'required'" >
+                                    v-validate="'required'" data-vv-scope="cfgForm">
                       </v-text-field>
                       <v-time-picker v-model="cfg.sleep.end"
                                      @change="$refs.endMenu.save(cfg.sleep.end)"></v-time-picker>
@@ -258,6 +269,36 @@
         <span class="text--white">{{ snb.msg }}</span>
         <v-btn flat color="grey lighten-2" @click.native="snb.show = false">Close</v-btn>
       </v-snackbar>
+
+      <!--Login modal-->
+      <v-dialog v-model="loginModal" persistent max-width="600">
+        <v-card>
+          <v-card-title class="headline">Login</v-card-title>
+          <v-card-text class="py-0">
+            <v-layout row wrap>
+              <v-flex class="xs12">
+                <v-text-field label="Username" required
+                              v-model="login.username"
+                              :error-messages="errors.collect('user name')" data-vv-name="user name"
+                              v-validate="'required|min:4|max:30'" data-vv-scope="loginForm">
+                </v-text-field>
+              </v-flex>
+              <v-flex class="xs12">
+                <v-text-field label="Password" required type="password"
+                              v-model="login.password"
+                              :error-messages="errors.collect('password')" data-vv-name="password"
+                              v-validate="'required|min:4|max:30'" data-vv-scope="loginForm">
+                </v-text-field>
+              </v-flex>
+            </v-layout>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="info" @click.native="postLogin">Login</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+      </v-layout>
     </v-content>
   </v-app>
 </div>
@@ -288,6 +329,15 @@
     }
     return obj;
   };
+
+  var getCookie = function (name) {
+    var value = "; " + document.cookie;
+    var parts = value.split("; " + name + "=");
+    if (parts.length === 2) {
+      return parts.pop().split(";").shift();
+    }
+    return null
+  }
 
   new Vue({
     el: '#app',
@@ -364,7 +414,13 @@
         timeout: 3500,
         color: 'info',
         msg: ''
-      }
+      },
+      loginModal: false,
+      login: {
+        username: '',
+        password: ''
+      },
+      uid: ''
     },
     watch: {
       cfg: {
@@ -379,57 +435,89 @@
       loadConfigs: function () {
         var self = this;
         axios.get('/api/v1/config')
-            .then(function (res) {
-              self.cfg = res.data;
-              setTimeout(function() {
-                self.isConfigChanged = false;
-                self.showSnackbar('success', 'Configuration loaded');
-              }, 100);
-            })
-            .catch(function (err) {
-              self.showSnackbar('error', 'Failed to load configuration');
-              console.log('CONFIG', err.response);
-            });
+          .then(function (res) {
+            self.cfg = res.data;
+            setTimeout(function() {
+              self.isConfigChanged = false;
+              self.showSnackbar('success', 'Configuration loaded');
+            }, 100);
+          })
+          .catch(function (err) {
+            self.showSnackbar('error', 'Failed to load configuration: ' + err.response.data);
+            console.log('CONFIG', err.response);
+          });
       },
       loadSerialPorts: function (refreshOnly) {
         var self = this;
         self.slSerialPorts = [];
         self.cfg.serial.port = '';
         axios.get('/api/v1/serial')
-            .then(function (res) {
-              self.slSerialPorts = res.data;
-              self.showSnackbar('success', 'Serial ports list refreshed');
-              if (!refreshOnly) {
-                self.loadConfigs();
-              }
-            })
-            .catch(function (err) {
-              self.showSnackbar('error', 'Failed to refresh serial ports list');
-              console.log('SERIAL', err.response);
-            });
+          .then(function (res) {
+            self.slSerialPorts = res.data;
+            self.showSnackbar('success', 'Serial ports list refreshed');
+            if (!refreshOnly) {
+              self.loadConfigs();
+            }
+          })
+          .catch(function (err) {
+            self.showSnackbar('error', 'Failed to refresh serial ports list: ' + err.response.data);
+            console.log('SERIAL', err.response);
+          });
       },
       saveConfig: function() {
         var self = this;
-        this.$validator.validateAll()
-            .then(function(result) {
-              if (!result) {
-                  self.showSnackbar('error', 'Something wrong. Please check your configuration first');
-                  return;
-              }
+        this.$validator.validateAll('cfgForm')
+          .then(function(result) {
+            if (!result) {
+              self.showSnackbar('error', 'Something wrong. Please check your configuration first');
+              return;
+            }
 
-              self.btnLoading = true;
-              axios.post('/api/v1/config', forceNumericObject(self.cfg))
-                  .then(function (res) {
-                    self.showSnackbar('success', 'Configuration saved');
-                    self.isConfigChanged = false;
-                    self.btnLoading = false;
-                  })
-                  .catch(function (err) {
-                    self.isConfigChanged = true;
-                    self.btnLoading = false;
-                    self.showSnackbar('error', 'Failed to save configuration: ' + err.response.data);
-                    console.log('SAVE CONFIG', err.response);
-                  });
+            self.btnLoading = true;
+            axios.post('/api/v1/config', forceNumericObject(self.cfg))
+              .then(function (res) {
+                self.showSnackbar('success', 'Configuration saved');
+                self.isConfigChanged = false;
+                self.btnLoading = false;
+              })
+              .catch(function (err) {
+                self.isConfigChanged = true;
+                self.btnLoading = false;
+                self.showSnackbar('error', 'Failed to save configuration: ' + err.response.data);
+                console.log('SAVE CONFIG', err.response);
+              });
+        });
+      },
+      clickMenuItem: function(idx) {
+        switch (idx) {
+          case 0: // Languages
+          case 1: // Admin info
+          case 2: // Logout
+        }
+      },
+      postLogin: function() {
+        var self = this;
+        this.$validator.validateAll('loginForm')
+          .then(function(result) {
+            if (!result) {
+              self.showSnackbar('error', 'Please check your username/password first');
+              return;
+            }
+
+            axios.post('/login', self.login)
+              .then(function (res) {
+                self.showSnackbar('success', 'Hello ' + self.login.username + '!');
+                self.login.password = '';
+                self.loginModal = false;
+                self.uid = getCookie('nightswatch_uid');
+                setTimeout(function() {
+                  self.loadSerialPorts(false);
+                }, 1000);
+              })
+              .catch(function (err) {
+                self.showSnackbar('error', 'Login failed: ' + err.response.data);
+                console.log('LOGIN', err.response);
+              });
           });
       },
       showSnackbar: function(type, msg, timeout) {
@@ -443,7 +531,13 @@
       }
     },
     mounted: function () {
-      this.loadSerialPorts(false);
+      this.uid = getCookie('nightswatch_uid');
+      if (this.uid) { // Logged in
+        this.loginModal = false;
+        this.loadSerialPorts(false);
+      } else {
+        this.loginModal = true;
+      }
     }
   })
 </script>
