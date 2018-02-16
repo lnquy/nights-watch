@@ -75,14 +75,16 @@
                     <v-select
                         :items="slSerialPorts" v-model="cfg.serial.port" label="Select serial port" single-line
                         bottom light solo required no-data-text="No serial ports found"
-                        hint="Serial Port" persistent-hint>
+                        hint="Serial Port" persistent-hint
+                        :error-messages="errors.collect('serial port')" v-validate="'required'" data-vv-name="serial port">
                     </v-select>
                   </v-flex>
                   <v-flex class="xs5 sm3">
                     <span class="sp-sec text--secondary">Baud Rate</span><br>
                     <v-select
                         :items="slSerialBauds" v-model="cfg.serial.baud" label="Select baud rate" single-line
-                        bottom light solo required hint="Baud Rate" persistent-hint>
+                        bottom light solo required hint="Baud Rate" persistent-hint
+                        :error-messages="errors.collect('baud rate')" v-validate="'required'" data-vv-name="baud rate">
                     </v-select>
                   </v-flex>
                 </v-layout>
@@ -113,7 +115,8 @@
                     <span class="sp-sec text--secondary">Refresh Interval</span><br>
                     <v-select
                         :items="slIntervals" v-model="cfg.stats.interval" label="Select refresh interval" single-line
-                        bottom light solo required hint="Refresh interval" persistent-hint>
+                        bottom light solo required hint="Refresh interval" persistent-hint
+                        :error-messages="errors.collect('refresh interval')" v-validate="'required'" data-vv-name="refresh interval">
                     </v-select>
                   </v-flex>
                 </v-layout>
@@ -124,11 +127,17 @@
                   </v-flex>
                   <v-flex xs6 class="pr-3 mt-n1">
                     <v-text-field class="vtf-right" type="number" min="0" max="100" label="Load threshold"
-                                  v-model="cfg.stats.cpu.load" suffix="%" :disabled="!cfg.stats.cpu.enabled"></v-text-field>
+                                  v-model="cfg.stats.cpu.load" suffix="%" :disabled="!cfg.stats.cpu.enabled"
+                                  :error-messages="errors.collect('CPU load')" data-vv-name="CPU load"
+                                  v-validate="'required|min_value:0|max_value:100'" >
+                    </v-text-field>
                   </v-flex>
                   <v-flex xs6 class="mt-n1">
                     <v-text-field class="vtf-right" type="number" min="0" max="100" label="Temperature threshold"
-                                  v-model="cfg.stats.cpu.temp" suffix="°C" :disabled="!cfg.stats.cpu.enabled"></v-text-field>
+                                  v-model="cfg.stats.cpu.temp" suffix="°C" :disabled="!cfg.stats.cpu.enabled"
+                                  :error-messages="errors.collect('CPU temperature')" data-vv-name="CPU temperature"
+                                  v-validate="'required|min_value:0|max_value:100'" >
+                    </v-text-field>
                   </v-flex>
                 </v-layout>
 
@@ -138,7 +147,10 @@
                   </v-flex>
                   <v-flex class="xs12 mt-n1">
                     <v-text-field class="vtf-right" type="number" min="0" max="100" label="Load threshold"
-                                  v-model="cfg.stats.memory.load" suffix="%" :disabled="!cfg.stats.memory.enabled"></v-text-field>
+                                  v-model="cfg.stats.memory.load" suffix="%" :disabled="!cfg.stats.memory.enabled"
+                                  :error-messages="errors.collect('memory load')" data-vv-name="memory load"
+                                  v-validate="'required|min_value:0|max_value:100'" >
+                    </v-text-field>
                   </v-flex>
                 </v-layout>
 
@@ -148,11 +160,17 @@
                   </v-flex>
                   <v-flex class="xs6 pr-3 mt-n1">
                     <v-text-field class="vtf-right" type="number" min="0" max="100" label="Load threshold"
-                                  v-model="cfg.stats.gpu.load" suffix="%" :disabled="!cfg.stats.gpu.enabled"></v-text-field>
+                                  v-model="cfg.stats.gpu.load" suffix="%" :disabled="!cfg.stats.gpu.enabled"
+                                  :error-messages="errors.collect('GPU load')" data-vv-name="GPU load"
+                                  v-validate="'required|min_value:0|max_value:100'" >
+                    </v-text-field>
                   </v-flex>
                   <v-flex class="xs6 mt-n1">
                     <v-text-field class="vtf-right" type="number" min="0" max="100000" label="GPU memory threshold"
-                                  v-model="cfg.stats.gpu.mem" suffix="MB" :disabled="!cfg.stats.gpu.enabled"></v-text-field>
+                                  v-model="cfg.stats.gpu.mem" suffix="MB" :disabled="!cfg.stats.gpu.enabled"
+                                  :error-messages="errors.collect('GPU memory')" data-vv-name="GPU memory"
+                                  v-validate="'required|min_value:0|max_value:100000'" >
+                    </v-text-field>
                   </v-flex>
                 </v-layout>
 
@@ -162,11 +180,19 @@
                   </v-flex>
                   <v-flex class="xs6 pr-3 mt-n1">
                     <v-text-field class="vtf-right" type="number" min="0" max="1000000" label="Download threshold"
-                                  v-model="cfg.stats.network.download" suffix="KB/s" :disabled="!cfg.stats.network.enabled"></v-text-field>
+                                  v-model="cfg.stats.network.download" suffix="KB/s"
+                                  :disabled="!cfg.stats.network.enabled"
+                                  :error-messages="errors.collect('download speed')" data-vv-name="download speed"
+                                  v-validate="'required|min_value:0|max_value:1000000'" >
+                    </v-text-field>
                   </v-flex>
                   <v-flex class="xs6 mt-n1">
                     <v-text-field class="vtf-right" type="number" min="0" max="1000000" label="Upload threshold"
-                                  v-model="cfg.stats.network.upload" suffix="KB/s" :disabled="!cfg.stats.network.enabled"></v-text-field>
+                                  v-model="cfg.stats.network.upload" suffix="KB/s"
+                                  :disabled="!cfg.stats.network.enabled"
+                                  :error-messages="errors.collect('upload speed')" data-vv-name="upload speed"
+                                  v-validate="'required|min_value:0|max_value:1000000'" >
+                    </v-text-field>
                   </v-flex>
                 </v-layout>
               </v-card-text>
@@ -199,7 +225,10 @@
                             offset-y full-width :nudge-right="40" max-width="290px" min-width="290px"
                             :return-value.sync="cfg.sleep.start">
                       <v-text-field slot="activator" label="Pick start time" v-model="cfg.sleep.start"
-                                    prepend-icon="timer" readonly></v-text-field>
+                                    prepend-icon="timer" readonly
+                                    :error-messages="errors.collect('sleepStart')" data-vv-name="sleepStart"
+                                    v-validate="'required'" >
+                      </v-text-field>
                       <v-time-picker v-model="cfg.sleep.start"
                                      @change="$refs.startMenu.save(cfg.sleep.start)"></v-time-picker>
                     </v-menu>
@@ -209,7 +238,10 @@
                             offset-y full-width :nudge-right="40" max-width="290px" min-width="290px"
                             :return-value.sync="cfg.sleep.end">
                       <v-text-field slot="activator" label="Pick end time" v-model="cfg.sleep.end"
-                                    prepend-icon="timer_off" readonly></v-text-field>
+                                    prepend-icon="timer_off" readonly
+                                    :error-messages="errors.collect('sleepEnd')" data-vv-name="sleepEnd"
+                                    v-validate="'required'" >
+                      </v-text-field>
                       <v-time-picker v-model="cfg.sleep.end"
                                      @change="$refs.endMenu.save(cfg.sleep.end)"></v-time-picker>
                     </v-menu>
@@ -234,7 +266,10 @@
 <script src="static/js/vuejs.dev.js"></script> <!--TODO-->
 <script src="static/js/vuetify.min.js"></script>
 <script src="static/js/axios.min.js"></script>
+<script src="static/js/vee-validate.min.js"></script>
 <script>
+  Vue.use(VeeValidate);
+
   // Convert all numeric string (e.g.: "15") fields to its actual numeric value (15).
   // Since Go backend will failed to convert string fields to uint/int fields,
   // we have to convert all these fields to numeric type before posting to backend.
@@ -245,7 +280,7 @@
           forceNumericObject(obj[key]); // Recursive to nested fields
         } else if (typeof obj[key] === 'string') {
           var num = Number(obj[key]);
-          if (num) {
+          if (num || num === 0) {
             obj[key] = num; // Convert numeric string to numeric
           }
         }
@@ -375,19 +410,27 @@
       },
       saveConfig: function() {
         var self = this;
-        self.btnLoading = true;
-        axios.post('/api/v1/config', forceNumericObject(self.cfg))
-            .then(function (res) {
-              self.showSnackbar('success', 'Configuration saved');
-              self.isConfigChanged = false;
-              self.btnLoading = false;
-            })
-            .catch(function (err) {
-              self.isConfigChanged = true;
-              self.btnLoading = false;
-              self.showSnackbar('error', 'Failed to save configuration: ' + err.response.data);
-              console.log('SAVE CONFIG', err.response);
-            });
+        this.$validator.validateAll()
+            .then(function(result) {
+              if (!result) {
+                  self.showSnackbar('error', 'Something wrong. Please check your configuration first');
+                  return;
+              }
+
+              self.btnLoading = true;
+              axios.post('/api/v1/config', forceNumericObject(self.cfg))
+                  .then(function (res) {
+                    self.showSnackbar('success', 'Configuration saved');
+                    self.isConfigChanged = false;
+                    self.btnLoading = false;
+                  })
+                  .catch(function (err) {
+                    self.isConfigChanged = true;
+                    self.btnLoading = false;
+                    self.showSnackbar('error', 'Failed to save configuration: ' + err.response.data);
+                    console.log('SAVE CONFIG', err.response);
+                  });
+          });
       },
       showSnackbar: function(type, msg, timeout) {
         if (!timeout) {

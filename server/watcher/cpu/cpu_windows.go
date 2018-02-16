@@ -25,13 +25,13 @@ func (w *watcher) GetStats(ctx context.Context, interval time.Duration) <-chan *
 					continue
 				}
 				stats.Load = util.GetAverage(percs)
+				// TODO: Use cgo to bind to CoreTemp or other C/C++ libs
 				temps, err := pshost.SensorsTemperatures()
 				if err != nil {
 					statsChan <- stats
 					logrus.Error(err)
 					continue
 				}
-				logrus.Debugf("Sensor temps: %#v", temps)
 				stats.Temp = temps[0].Temperature
 				statsChan <- stats
 			case <-ctx.Done():
