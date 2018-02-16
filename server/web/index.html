@@ -376,7 +376,6 @@
       },
       menus: [
         {icon: 'language', text: 'Languages'},
-        {icon: 'account_circle', text: 'Change admin info'},
         {icon: 'keyboard_return', text: 'Logout'}
       ],
       slSerialPorts: [],
@@ -489,10 +488,27 @@
         });
       },
       clickMenuItem: function(idx) {
+        var self = this;
         switch (idx) {
           case 0: // Languages
-          case 1: // Admin info
-          case 2: // Logout
+            alert('Nothing here yet :)')
+            return;
+          case 1: // Logout
+            if (!this.uid) {
+              return;
+            }
+            axios.get('/logout')
+                .then(function (res) {
+                  self.showSnackbar('success', 'Goodbye friend!');
+                  setTimeout(function() {
+                    location.reload();
+                  }, 1000);
+                })
+                .catch(function (err) {
+                  self.showSnackbar('error', 'Logout failed: ' + err.response.data);
+                  console.log('LOGOUT', err.response);
+                });
+            return;
         }
       },
       postLogin: function() {

@@ -55,6 +55,7 @@ func main() {
 	r.Get("/", handler.GetIndexPage)
 	r.Get("/favicon.ico", handler.Favicon)
 	r.Post("/login", handler.Login)
+	r.Get("/logout", handler.Logout)
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Route("/serial", func(r chi.Router) {
 			r.Use(handler.Authentication)

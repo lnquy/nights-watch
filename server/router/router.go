@@ -263,6 +263,19 @@ func (rt *Router) Login(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, "Ok")
 }
 
+func (rt *Router) Logout(w http.ResponseWriter, r *http.Request) {
+	if err := sm.Load(r).Destroy(w); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	http.SetCookie(w, &http.Cookie{
+		Name: "nightswatch_uid",
+		Value: "",
+		Expires: time.Unix(0, 0),
+	})
+	render.JSON(w, r, "Ok")
+}
+
 func (rt *Router) GetIndexPage(w http.ResponseWriter, r *http.Request) {
 	w.Write(indexPage)
 }
