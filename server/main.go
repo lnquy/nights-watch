@@ -89,7 +89,7 @@ func main() {
 	// Graceful shutdown
 	<-stopChan
 	logrus.Info("main: termination signal received. Exiting")
-	handler.Stop()
+	handler.Stop(true)
 	ctx, _ := context.WithTimeout(context.Background(), 3*time.Second)
 	server.Shutdown(ctx)
 	logrus.Info("main: have a nice day, goodbye!")

@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"path"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-chi/render"
@@ -22,10 +24,12 @@ import (
 
 type (
 	Router struct {
-		cfg    *config.Config
-		sConn  *serial.Port
-		ctx    context.Context
-		cancel context.CancelFunc
+		cfg         *config.Config
+		sConn       *serial.Port
+		ctx         context.Context
+		cancel      context.CancelFunc
+		sleepCtx    context.Context
+		sleepCancel context.CancelFunc
 	}
 
 	Login struct {
@@ -70,7 +74,7 @@ func New(cfg *config.Config) *Router {
 		cancel: cancel,
 	}
 	if r.sConn != nil {
-		go r.WatchStats() // Start watchers
+		r.sleepTimer()
 	}
 	return r
 }
@@ -100,8 +104,9 @@ func newSerialConn(cfg config.Config) *serial.Port {
 // 3: GPU stats
 // 4: Network stats
 // z: Alert
-func (rt *Router) WatchStats() {
+func (rt *Router) watchStats() {
 	interval := time.Duration(rt.cfg.Stats.Interval) * time.Second
+	rt.sConn.Write([]byte(fmt.Sprintf("y|%d$", rt.cfg.Sleep.NormalBrightness)))
 
 	// Reset all old stats/alerts then init new watchers
 	cw := make(<-chan *cpu.Stats)
@@ -192,9 +197,12 @@ func (rt *Router) WatchStats() {
 	}
 }
 
-func (rt *Router) Stop() {
+func (rt *Router) Stop(stopSleepContext bool) {
 	if rt.cancel != nil {
 		rt.cancel()
+	}
+	if stopSleepContext && rt.sleepCancel != nil {
+		rt.sleepCancel()
 	}
 	if rt.sConn != nil {
 		rt.sConn.Close()
@@ -256,8 +264,8 @@ func (rt *Router) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.SetCookie(w, &http.Cookie{
-		Name: "nightswatch_uid",
-		Value: rt.cfg.Admin.Username,
+		Name:   "nightswatch_uid",
+		Value:  rt.cfg.Admin.Username,
 		MaxAge: 7 * 24 * 3600,
 	})
 	render.JSON(w, r, "Ok")
@@ -269,8 +277,8 @@ func (rt *Router) Logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.SetCookie(w, &http.Cookie{
-		Name: "nightswatch_uid",
-		Value: "",
+		Name:    "nightswatch_uid",
+		Value:   "",
 		Expires: time.Unix(0, 0),
 	})
 	render.JSON(w, r, "Ok")
@@ -283,8 +291,8 @@ func (rt *Router) GetIndexPage(w http.ResponseWriter, r *http.Request) {
 		// so frontend can behave normally.
 		if _, err := r.Cookie("nightswatch_uid"); err != nil {
 			http.SetCookie(w, &http.Cookie{
-				Name: "nightswatch_uid",
-				Value: "guest",
+				Name:   "nightswatch_uid",
+				Value:  "guest",
 				MaxAge: 7 * 24 * 3600,
 			})
 		}
@@ -294,8 +302,8 @@ func (rt *Router) GetIndexPage(w http.ResponseWriter, r *http.Request) {
 		// delete it so frontend will require login again.
 		if c, err := r.Cookie("nightswatch_uid"); err == nil && c.Value == "guest" {
 			http.SetCookie(w, &http.Cookie{
-				Name: "nightswatch_uid",
-				Value: "guest",
+				Name:    "nightswatch_uid",
+				Value:   "guest",
 				Expires: time.Unix(0, 0),
 			})
 		}
@@ -349,7 +357,7 @@ func (rt *Router) UpdateConfig(w http.ResponseWriter, r *http.Request) {
 
 	// Kill old watchers and Arduino connection then spawn new ones by new config
 	logrus.Infof("router: config updated. Terminating old watchers and Arduino connection")
-	rt.Stop()
+	rt.Stop(true)
 	logrus.Infof("router: re-spawning Arduino connection and watchers")
 	rt.sConn = newSerialConn(*rt.cfg)
 	if rt.sConn == nil {
@@ -357,7 +365,7 @@ func (rt *Router) UpdateConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	rt.ctx, rt.cancel = context.WithCancel(context.Background())
-	go rt.WatchStats()
+	rt.sleepTimer() // Check sleep time and decide to start watchers or not
 	render.JSON(w, r, "Ok")
 }
 
@@ -383,8 +391,8 @@ func (rt *Router) Authentication(next http.Handler) http.Handler {
 			// so frontend can behave as normal
 			if _, err := r.Cookie("nightswatch_uid"); err != nil {
 				http.SetCookie(w, &http.Cookie{
-					Name: "nightswatch_uid",
-					Value: "guest",
+					Name:   "nightswatch_uid",
+					Value:  "guest",
 					MaxAge: 7 * 24 * 3600,
 				})
 			}
@@ -392,4 +400,84 @@ func (rt *Router) Authentication(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	}
 	return http.HandlerFunc(fn)
+}
+
+func (rt *Router) sleepTimer() {
+	if rt.cfg.Sleep.Start == rt.cfg.Sleep.End {
+		logrus.Infof("router: sleep time disabled")
+		go rt.watchStats()
+		return
+	}
+	startSpl, endSpl := strings.Split(rt.cfg.Sleep.Start, ":"), strings.Split(rt.cfg.Sleep.End, ":")
+	startHour, _ := strconv.Atoi(startSpl[0])
+	startMin, _ := strconv.Atoi(startSpl[1])
+	endHour, _ := strconv.Atoi(endSpl[0])
+	endMin, _ := strconv.Atoi(endSpl[1])
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day(), startHour, startMin, 0, 0, now.Location())
+	end := time.Date(now.Year(), now.Month(), now.Day(), endHour, endMin, 0, 0, now.Location())
+	logrus.Infof("TIME: %s - %s - %s", now.String(), start.String(), end.String())
+	// Add up one day if timer was over
+	if now.Unix() > end.Unix() {
+		start = start.Add(24 * time.Hour)
+		end = end.Add(24 * time.Hour)
+	}
+	logrus.Infof("AFTER: %s - %s - %s", now.String(), start.String(), end.String())
+
+	if now.Unix() >= start.Unix() && now.Unix() < end.Unix() { // In sleep time
+		go rt.scheduleSleepEnd(start.Sub(now), end.Sub(now))
+	} else { // In normal time
+		go rt.watchStats()
+		go rt.scheduleSleepStart(start.Sub(now), end.Sub(now))
+	}
+}
+
+func (rt *Router) scheduleSleepStart(start, end time.Duration) {
+	logrus.Infof("sleep: scheduling new sleep start at %s", time.Now().Add(start).String())
+	if rt.sConn != nil {
+		rt.sConn.Write([]byte(fmt.Sprintf("y|%d$", rt.cfg.Sleep.NormalBrightness))) // Set LCD brightness to normal
+	}
+	rt.sleepCtx, rt.sleepCancel = context.WithCancel(context.Background())
+	startTimer := time.NewTicker(start)
+	select {
+	case <-startTimer.C:
+		logrus.Infof("sleep start: timer ended. Stop all watchers and close Arduino connection")
+		startTimer.Stop()
+	case <-rt.sleepCtx.Done():
+		logrus.Infof("sleep start: context done. Sleep start stopped")
+		startTimer.Stop()
+		return
+	}
+
+	go rt.scheduleSleepEnd(24*time.Hour, end)
+	logrus.Infof("sleep start: done")
+}
+
+func (rt *Router) scheduleSleepEnd(start, end time.Duration) {
+	logrus.Infof("sleep: scheduling new sleep end at %s", time.Now().Add(end).String())
+	if rt.sConn != nil {
+		rt.sConn.Write([]byte(fmt.Sprintf("y|%d$", rt.cfg.Sleep.SleepBrightness))) // Dim the LCD
+	}
+	rt.sleepCtx, rt.sleepCancel = context.WithCancel(context.Background())
+	rt.Stop(false)
+	endTimer := time.NewTimer(end)
+	select {
+	case <-endTimer.C:
+		logrus.Infof("sleep end: timer ended. Initialize new Arduino connection and respawn all watchers")
+		endTimer.Stop()
+	case <-rt.sleepCtx.Done():
+		logrus.Infof("sleep end: context done. Sleep end stopped")
+		endTimer.Stop()
+		return
+	}
+
+	rt.sConn = newSerialConn(*rt.cfg)
+	if rt.sConn == nil {
+		logrus.Panicf("router: invalid serial configuration")
+	}
+	rt.ctx, rt.cancel = context.WithCancel(context.Background())
+	go rt.watchStats()
+	go rt.scheduleSleepStart(24*time.Hour - start, 24*time.Hour)
+	logrus.Infof("sleep end: done")
 }
