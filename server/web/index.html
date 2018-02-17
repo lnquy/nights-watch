@@ -46,7 +46,7 @@
         </v-menu>
       </v-toolbar>
       <!--Main content-->
-      <v-container fluid>
+      <v-container fluid grid-list-lg>
         <!--Serial card-->
         <v-layout justify-center>
           <v-flex class="xs12 sm8">
@@ -71,7 +71,7 @@
               </v-card-title>
               <v-card-text class="pt-0">
                 <v-layout>
-                  <v-flex class="xs7 sm9 pr-3">
+                  <v-flex class="xs7 sm9">
                     <span class="sp-sec text--secondary">Serial Port</span><br>
                     <v-select
                         :items="slSerialPorts" v-model="cfg.serial.port" label="Select serial port" single-line
@@ -130,7 +130,7 @@
                     <v-switch class="sw-subheading" color="green accent-3" label="CPU"
                               v-model="cfg.stats.cpu.enabled" :disabled="!uid"></v-switch>
                   </v-flex>
-                  <v-flex xs6 class="pr-3 mt-n1">
+                  <v-flex xs6 class="mt-n1">
                     <v-text-field class="vtf-right" type="number" min="0" max="100" label="Load threshold"
                                   v-model="cfg.stats.cpu.load" suffix="%" :disabled="!cfg.stats.cpu.enabled || !uid"
                                   :error-messages="errors.collect('CPU load')" data-vv-name="CPU load"
@@ -166,7 +166,7 @@
                     <v-switch class="sw-subheading" color="green accent-3" label="GPU"
                               v-model="cfg.stats.gpu.enabled" :disabled="!uid"></v-switch>
                   </v-flex>
-                  <v-flex class="xs6 pr-3 mt-n1">
+                  <v-flex class="xs6 mt-n1">
                     <v-text-field class="vtf-right" type="number" min="0" max="100" label="Load threshold"
                                   v-model="cfg.stats.gpu.load" suffix="%"
                                   :disabled="!cfg.stats.gpu.enabled || !uid"
@@ -189,7 +189,7 @@
                     <v-switch class="sw-subheading" color="green accent-3" label="Network"
                               v-model="cfg.stats.network.enabled" :disabled="!uid"></v-switch>
                   </v-flex>
-                  <v-flex class="xs6 pr-3 mt-n1">
+                  <v-flex class="xs6 mt-n1">
                     <v-text-field class="vtf-right" type="number" min="0" max="1000000" label="Download threshold"
                                   v-model="cfg.stats.network.download" suffix="KB/s"
                                   :disabled="!cfg.stats.network.enabled || !uid"
@@ -231,11 +231,11 @@
               </v-card-title>
               <v-card-text class="pt-0">
                 <v-layout row wrap>
-                  <v-flex class="xs6 pr-3">
+                  <v-flex class="xs6">
                     <v-menu ref="startMenu" lazy :close-on-content-click="false" transition="scale-transition"
                             offset-y full-width :nudge-right="40" max-width="290px" min-width="290px"
                             :return-value.sync="cfg.sleep.start">
-                      <v-text-field slot="activator" label="Pick start time" v-model="cfg.sleep.start"
+                      <v-text-field class="vtf-right" slot="activator" label="Pick start time" v-model="cfg.sleep.start"
                                     prepend-icon="timer" readonly :disabled="!uid"
                                     :error-messages="errors.collect('sleepStart')" data-vv-name="sleepStart"
                                     v-validate="'required'" data-vv-scope="cfgForm">
@@ -248,7 +248,7 @@
                     <v-menu ref="endMenu" lazy :close-on-content-click="false" transition="scale-transition"
                             offset-y full-width :nudge-right="40" max-width="290px" min-width="290px"
                             :return-value.sync="cfg.sleep.end">
-                      <v-text-field slot="activator" label="Pick end time" v-model="cfg.sleep.end"
+                      <v-text-field class="vtf-right" slot="activator" label="Pick end time" v-model="cfg.sleep.end"
                                     prepend-icon="timer_off" readonly :disabled="!uid"
                                     :error-messages="errors.collect('sleepEnd')" data-vv-name="sleepEnd"
                                     v-validate="'required'" data-vv-scope="cfgForm">
@@ -257,7 +257,7 @@
                                      @change="$refs.endMenu.save(cfg.sleep.end)"></v-time-picker>
                     </v-menu>
                   </v-flex>
-                  <v-flex class="xs6 pr-3">
+                  <v-flex class="xs6">
                     <v-text-field class="vtf-right" type="number" min="1" max="100" label="Normal brightness"
                                   v-model="cfg.sleep.normalBrightness" suffix="%" :disabled="!uid"
                                   :error-messages="errors.collect('normal brightness')" data-vv-name="normal brightness"
