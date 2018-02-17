@@ -419,9 +419,11 @@ func (rt *Router) sleepTimer() {
 	end := time.Date(now.Year(), now.Month(), now.Day(), endHour, endMin, 0, 0, now.Location())
 	logrus.Debugf("TIME: %s - %s - %s", now.String(), start.String(), end.String())
 	// Add up one day if timer was over
+	if start.Unix() > end.Unix() {
+		end = end.Add(24 * time.Hour)
+	}
 	if now.Unix() > end.Unix() {
 		start = start.Add(24 * time.Hour)
-		end = end.Add(24 * time.Hour)
 	}
 	logrus.Debugf("AFTER: %s - %s - %s", now.String(), start.String(), end.String())
 
