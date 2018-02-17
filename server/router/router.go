@@ -417,29 +417,33 @@ func (rt *Router) sleepTimer() {
 	now := time.Now()
 	start := time.Date(now.Year(), now.Month(), now.Day(), startHour, startMin, 0, 0, now.Location())
 	end := time.Date(now.Year(), now.Month(), now.Day(), endHour, endMin, 0, 0, now.Location())
-	logrus.Infof("TIME: %s - %s - %s", now.String(), start.String(), end.String())
+	logrus.Debugf("TIME: %s - %s - %s", now.String(), start.String(), end.String())
 	// Add up one day if timer was over
 	if now.Unix() > end.Unix() {
 		start = start.Add(24 * time.Hour)
 		end = end.Add(24 * time.Hour)
 	}
-	logrus.Infof("AFTER: %s - %s - %s", now.String(), start.String(), end.String())
+	logrus.Debugf("AFTER: %s - %s - %s", now.String(), start.String(), end.String())
 
 	if now.Unix() >= start.Unix() && now.Unix() < end.Unix() { // In sleep time
-		go rt.scheduleSleepEnd(start.Sub(now), end.Sub(now))
+		go rt.scheduleSleepEnd(start, end)
 	} else { // In normal time
 		go rt.watchStats()
-		go rt.scheduleSleepStart(start.Sub(now), end.Sub(now))
+		go rt.scheduleSleepStart(start, end)
 	}
 }
 
-func (rt *Router) scheduleSleepStart(start, end time.Duration) {
-	logrus.Infof("sleep: scheduling new sleep start at %s", time.Now().Add(start).String())
+func (rt *Router) scheduleSleepStart(start, end time.Time) {
+	logrus.Infof("sleep: scheduling new sleep start at %s", start.String())
+	logrus.Debugf("sleep start: %s - %s", start, end)
 	if rt.sConn != nil {
 		rt.sConn.Write([]byte(fmt.Sprintf("y|%d$", rt.cfg.Sleep.NormalBrightness))) // Set LCD brightness to normal
 	}
 	rt.sleepCtx, rt.sleepCancel = context.WithCancel(context.Background())
-	startTimer := time.NewTicker(start)
+	if start.Unix() < time.Now().Unix() {
+		start = start.Add(24 * time.Hour)
+	}
+	startTimer := time.NewTicker(start.Sub(time.Now()))
 	select {
 	case <-startTimer.C:
 		logrus.Infof("sleep start: timer ended. Stop all watchers and close Arduino connection")
@@ -450,18 +454,22 @@ func (rt *Router) scheduleSleepStart(start, end time.Duration) {
 		return
 	}
 
-	go rt.scheduleSleepEnd(24*time.Hour, end)
+	go rt.scheduleSleepEnd(start, end)
 	logrus.Infof("sleep start: done")
 }
 
-func (rt *Router) scheduleSleepEnd(start, end time.Duration) {
-	logrus.Infof("sleep: scheduling new sleep end at %s", time.Now().Add(end).String())
+func (rt *Router) scheduleSleepEnd(start, end time.Time) {
+	logrus.Infof("sleep: scheduling new sleep end at %s", end.String())
+	logrus.Debugf("sleep end: %s - %s", start, end)
 	if rt.sConn != nil {
 		rt.sConn.Write([]byte(fmt.Sprintf("y|%d$", rt.cfg.Sleep.SleepBrightness))) // Dim the LCD
 	}
 	rt.sleepCtx, rt.sleepCancel = context.WithCancel(context.Background())
 	rt.Stop(false)
-	endTimer := time.NewTimer(end)
+	if end.Unix() < time.Now().Unix() {
+		end = end.Add(24 * time.Hour)
+	}
+	endTimer := time.NewTimer(end.Sub(time.Now()))
 	select {
 	case <-endTimer.C:
 		logrus.Infof("sleep end: timer ended. Initialize new Arduino connection and respawn all watchers")
@@ -478,6 +486,6 @@ func (rt *Router) scheduleSleepEnd(start, end time.Duration) {
 	}
 	rt.ctx, rt.cancel = context.WithCancel(context.Background())
 	go rt.watchStats()
-	go rt.scheduleSleepStart(24*time.Hour - start, 24*time.Hour)
+	go rt.scheduleSleepStart(start.Add(24*time.Hour), end.Add(24*time.Hour))
 	logrus.Infof("sleep end: done")
 }
