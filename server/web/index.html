@@ -259,7 +259,7 @@
                   </v-flex>
                   <v-flex class="xs6">
                     <v-text-field class="vtf-right" type="number" min="1" max="100" label="Normal brightness"
-                                  v-model="cfg.sleep.normalBrightness" suffix="%" :disabled="!uid"
+                                  v-model="cfg.sleep.normalBrightness" :disabled="!uid"
                                   :error-messages="errors.collect('normal brightness')" data-vv-name="normal brightness"
                                   v-validate="'required|min_value:1|max_value:100'" data-vv-scope="cfgForm"
                                   prepend-icon="brightness_high">
@@ -267,7 +267,7 @@
                   </v-flex>
                   <v-flex class="xs6">
                     <v-text-field class="vtf-right" type="number" min="0" max="100" label="Sleep brightness"
-                                  v-model="cfg.sleep.sleepBrightness" suffix="%" :disabled="!uid"
+                                  v-model="cfg.sleep.sleepBrightness" :disabled="!uid"
                                   :error-messages="errors.collect('sleep brightness')" data-vv-name="sleep brightness"
                                   v-validate="'required|min_value:0|max_value:100'" data-vv-scope="cfgForm"
                                   prepend-icon="brightness_3">
@@ -311,6 +311,45 @@
           <v-card-actions>
             <v-spacer></v-spacer>
             <v-btn color="info" @click.native="postLogin">Login</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
+      <!--Administrator modal-->
+      <v-dialog v-model="adminModal" persistent max-width="600">
+        <v-card>
+          <v-card-title class="headline">Administrator</v-card-title>
+          <v-card-text class="py-0">
+            <v-layout row wrap>
+              <v-flex xs12>
+                <v-tooltip top>
+                  <v-switch class="sw-subheading" color="green accent-3" label="Force login"
+                            v-model="admin.forceLogin" slot="activator"></v-switch>
+                  <span>Force login requires administrator to logged in before changing any configurations.<br>
+                    If turn off, anyone can access the web page and configure your device.</span>
+                </v-tooltip>
+              </v-flex>
+              <p class="subheading green-accent-3">Change username/password</p>
+              <v-flex class="xs12">
+                <v-text-field label="Username" v-model="admin.username" :disabled="!admin.forceLogin">
+                </v-text-field>
+              </v-flex>
+              <v-flex xs12>
+                <v-text-field type="password" label="Old password" v-model="admin.oldPassword"
+                              :disabled="!admin.forceLogin">
+                  </v-text-field>
+              </v-flex>
+              <v-flex xs12>
+                <v-text-field type="password" label="New password" v-model="admin.newPassword"
+                              :disabled="!admin.forceLogin">
+                  </v-text-field>
+              </v-flex>
+            </v-layout>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn flat @click.native="adminModal = false">Cancel</v-btn>
+            <v-btn color="info" @click.native="updateAdminConfig">Save</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
@@ -379,6 +418,10 @@
     }
     return null
   }
+
+  var deleteCookie = function(name) {
+    document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+  };
 
   new Vue({
     el: '#app',
@@ -464,7 +507,14 @@
         password: ''
       },
       aboutModal: false,
-      uid: ''
+      uid: '',
+      adminModal: false,
+      admin: {
+        forceLogin: true,
+        username: '',
+        oldPassword: '',
+        newPassword: ''
+      }
     },
     watch: {
       cfg: {
@@ -555,7 +605,8 @@
             alert('Nothing here yet :)');
             return;
           case 2:
-            alert('Nothing here yet :)');
+            self.adminModal = true;
+            self.getAdminConfig();
             return;
         }
       },
@@ -582,6 +633,36 @@
                 self.showSnackbar('error', 'Login failed: ' + err.response.data);
                 console.log('LOGIN', err.response);
               });
+          });
+      },
+      getAdminConfig: function() {
+        var self = this;
+        axios.get('/api/v1/config/admin')
+          .then(function (res) {
+            self.admin = res.data;
+          })
+          .catch(function (err) {
+            self.showSnackbar('error', 'Failed to load administrator config: ' + err.response.data);
+            console.log('ADMIN', err.response);
+          });
+      },
+      updateAdminConfig: function() {
+        var self = this;
+        axios.post('/api/v1/config/admin', self.admin)
+          .then(function (res) {
+            self.showSnackbar('success', 'Administrator config updated');
+            self.admin.oldPassword = '';
+            self.admin.newPassword = '';
+            self.adminModal = false;
+            setTimeout(function() {
+              deleteCookie("nightswatch");
+              deleteCookie("nightswatch_uid");
+              location.reload(); // Always force reload after admin config changed
+            }, 1500);
+          })
+          .catch(function (err) {
+            self.showSnackbar('error', 'Failed to save administrator config: ' + err.response.data);
+            console.log('ADMIN', err.response);
           });
       },
       showSnackbar: function(type, msg, timeout) {

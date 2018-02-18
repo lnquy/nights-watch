@@ -32,9 +32,16 @@ type (
 		sleepCancel context.CancelFunc
 	}
 
-	Login struct {
+	login struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
+	}
+
+	adminCfg struct {
+		ForceLogin bool `json:"forceLogin"`
+		Username string `json:"username"`
+		OldPassword string `json:"oldPassword"`
+		NewPassword string `json:"newPassword"`
 	}
 
 	alertType int
@@ -249,7 +256,7 @@ func (rt *Router) Favicon(w http.ResponseWriter, r *http.Request) {
 }
 
 func (rt *Router) Login(w http.ResponseWriter, r *http.Request) {
-	lg := Login{}
+	lg := login{}
 	if err := json.NewDecoder(r.Body).Decode(&lg); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -276,11 +283,7 @@ func (rt *Router) Logout(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	http.SetCookie(w, &http.Cookie{
-		Name:    "nightswatch_uid",
-		Value:   "",
-		Expires: time.Unix(0, 0),
-	})
+	util.DeleteCookie(w, "nightswatch_uid")
 	render.JSON(w, r, "Ok")
 }
 
@@ -301,11 +304,7 @@ func (rt *Router) GetIndexPage(w http.ResponseWriter, r *http.Request) {
 		// Check if nightswatch_uid cookie available or not, if available and is a "guest" cookie then
 		// delete it so frontend will require login again.
 		if c, err := r.Cookie("nightswatch_uid"); err == nil && c.Value == "guest" {
-			http.SetCookie(w, &http.Cookie{
-				Name:    "nightswatch_uid",
-				Value:   "guest",
-				Expires: time.Unix(0, 0),
-			})
+			util.DeleteCookie(w, "nightswatch_uid")
 		}
 	}
 	w.Write(indexPage)
@@ -366,6 +365,57 @@ func (rt *Router) UpdateConfig(w http.ResponseWriter, r *http.Request) {
 	}
 	rt.ctx, rt.cancel = context.WithCancel(context.Background())
 	rt.sleepTimer() // Check sleep time and decide to start watchers or not
+	render.JSON(w, r, "Ok")
+}
+
+func (rt *Router) GetAdminConfig(w http.ResponseWriter, r *http.Request) {
+	b, err := json.Marshal(struct {
+		ForceLogin bool `json:"forceLogin"`
+		Username string `json:"username"`
+	}{
+		ForceLogin: rt.cfg.Admin.ForceLogin,
+		Username: rt.cfg.Admin.Username,
+	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Write(b)
+}
+
+func (rt *Router) UpdateAdminConfig(w http.ResponseWriter, r *http.Request) {
+	admCfg := adminCfg{}
+	if err := json.NewDecoder(r.Body).Decode(&admCfg); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	tmpAdm := rt.cfg.Admin
+	isPasswordChanged, isForceLoginChanged := false, false
+	if admCfg.Username != "" && admCfg.OldPassword != "" && admCfg.NewPassword != "" { // Change password
+		if admCfg.OldPassword != rt.cfg.Admin.Password {
+			http.Error(w, "Invalid old password", http.StatusBadRequest)
+			return
+		}
+		rt.cfg.Admin.Username = admCfg.Username
+		rt.cfg.Admin.Password = admCfg.NewPassword
+		isPasswordChanged = true
+	}
+	if rt.cfg.Admin.ForceLogin != admCfg.ForceLogin {
+		rt.cfg.Admin.ForceLogin = admCfg.ForceLogin
+		isForceLoginChanged = true
+	}
+	if isPasswordChanged || isForceLoginChanged {
+		util.DeleteCookie(w, "nightswatch")
+		util.DeleteCookie(w, "nightswatch_uid")
+	}
+	if _, err := rt.cfg.WriteToFile(""); err != nil {
+		rt.cfg.Admin = tmpAdm // Fall back to old config
+		logrus.Errorf("router: failed to write config to file: %s", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	render.JSON(w, r, "Ok")
 }
 

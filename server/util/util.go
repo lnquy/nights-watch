@@ -3,10 +3,12 @@ package util
 import (
 	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path"
 	"regexp"
-	
+	"time"
+
 	"github.com/sirupsen/logrus"
 )
 
@@ -98,4 +100,12 @@ func GetAverage(arr []float64) float64 {
 		sum += v
 	}
 	return sum / float64(len(arr))
+}
+
+func DeleteCookie(w http.ResponseWriter, name string) {
+	http.SetCookie(w, &http.Cookie{
+		Name:    name,
+		Value:   "",
+		Expires: time.Unix(0, 0),
+	})
 }

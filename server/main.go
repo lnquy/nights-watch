@@ -65,6 +65,8 @@ func main() {
 			r.Use(handler.Authentication)
 			r.Get("/", handler.GetConfig)
 			r.Post("/", handler.UpdateConfig)
+			r.Get("/admin", handler.GetAdminConfig)
+			r.Post("/admin", handler.UpdateAdminConfig)
 		})
 		r.Route("/dev", func(r chi.Router) {
 			r.Get("/tmpl/reload", handler.ReloadTemplate)

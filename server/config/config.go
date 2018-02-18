@@ -24,7 +24,7 @@ type (
 
 	Admin struct {
 		// User must login to able to configure via web page if this flag is true
-		ForceLogin bool   `json:"force_login"`
+		ForceLogin bool   `json:"forceLogin"`
 		Username   string `json:"username"`
 		Password   string `json:"password"`
 	}
