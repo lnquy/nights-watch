@@ -1,3 +1,8 @@
+// +build linux
+
+// TODO: Linux and Darwin can be merged together later
+// Also Windows, if can be supported via shirou/cpu
+
 package cpu
 
 import (
