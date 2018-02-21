@@ -9,19 +9,13 @@
 
 [[projects]]
   name = "github.com/alexedwards/scs"
-  packages = [
-    ".",
-    "stores/cookiestore"
-  ]
+  packages = [".","stores/cookiestore"]
   revision = "c052ae9a41ed2ac33e3ca2b8d44309f20aab81e2"
   version = "v1.2.0"
 
 [[projects]]
   name = "github.com/go-chi/chi"
-  packages = [
-    ".",
-    "middleware"
-  ]
+  packages = [".","middleware"]
   revision = "e83ac2304db3c50cf03d96a2fcd39009d458bc35"
   version = "v3.3.2"
 
@@ -39,25 +33,21 @@
 
 [[projects]]
   name = "github.com/go-ole/go-ole"
-  packages = [
-    ".",
-    "oleutil"
-  ]
+  packages = [".","oleutil"]
   revision = "a41e3c4b706f6ae8dfbff342b06e40fa4d2d0506"
   version = "v1.2.1"
 
 [[projects]]
   name = "github.com/shirou/gopsutil"
-  packages = [
-    "cpu",
-    "host",
-    "internal/common",
-    "mem",
-    "net",
-    "process"
-  ]
+  packages = ["cpu","host","internal/common","mem","net","process"]
   revision = "c432be29ccce470088d07eea25b3ea7e68a8afbb"
   version = "v2.18.01"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/shirou/w32"
+  packages = ["."]
+  revision = "bb4de0191aa41b5507caa14b0650cdbddcd9280b"
 
 [[projects]]
   name = "github.com/sirupsen/logrus"
@@ -74,26 +64,18 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
-  packages = [
-    "nacl/secretbox",
-    "poly1305",
-    "salsa20/salsa",
-    "ssh/terminal"
-  ]
+  packages = ["nacl/secretbox","poly1305","salsa20/salsa","ssh/terminal"]
   revision = "5119cf507ed5294cc409c092980c7497ee5d6fd2"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
-  packages = [
-    "unix",
-    "windows"
-  ]
+  packages = ["unix","windows"]
   revision = "37707fdb30a5b38865cfb95e5aab41707daec7fd"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b7d831f86b751d715e4117ecb65100af8e0156a78c3ebfbb962187e37e1cbd24"
+  inputs-digest = "edc5d9c08df6204d4f2727315e7ae68b30e83f67e2d5e6355bbcae4da10d5cbe"
   solver-name = "gps-cdcl"
   solver-version = 1

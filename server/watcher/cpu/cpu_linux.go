@@ -13,6 +13,7 @@ import (
 	pscpu "github.com/shirou/gopsutil/cpu"
 	pshost "github.com/shirou/gopsutil/host"
 	"github.com/sirupsen/logrus"
+	"strings"
 )
 
 func (w *watcher) GetStats(ctx context.Context, interval time.Duration) <-chan *Stats {
@@ -36,7 +37,8 @@ func (w *watcher) GetStats(ctx context.Context, interval time.Duration) <-chan *
 					logrus.Error(err)
 					continue
 				}
-				stats.Temp = temps[0].Temperature
+				logrus.Debugf("TEMP: %v", temps)
+				stats.Temp = getCPUTemperature(temps)
 				statsChan <- stats
 			case <-ctx.Done():
 				close(statsChan)
@@ -47,4 +49,29 @@ func (w *watcher) GetStats(ctx context.Context, interval time.Duration) <-chan *
 		}
 	}()
 	return statsChan
+}
+
+// Return the first CPU package temperature if possible, otherwise return the maximum temperature among all cores
+func getCPUTemperature(temps []pshost.TemperatureStat) float64 {
+	if temp := getPackageTemperature(temps); temp != 0.0 {
+		return temp
+	}
+	max := 0.0
+	for _, t := range temps {
+		if strings.HasPrefix(t.SensorKey, "coretemp_core") && strings.HasSuffix(t.SensorKey, "_input") {
+			if t.Temperature > max {
+				max = t.Temperature
+			}
+		}
+	}
+	return max
+}
+
+func getPackageTemperature(temps []pshost.TemperatureStat) float64 {
+	for _, t := range temps {
+		if t.SensorKey == "coretemp_packageid0_input" {
+			return t.Temperature
+		}
+	}
+	return 0.0
 }
