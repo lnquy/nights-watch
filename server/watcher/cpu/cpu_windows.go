@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/lnquy/nights-watch/server/util"
-	pscpu "github.com/shirou/gopsutil/cpu"
-	pshost "github.com/shirou/gopsutil/host"
+	pscpu "github.com/lnquy/gopsutil/cpu"
+	pshost "github.com/lnquy/gopsutil/host"
 	"github.com/sirupsen/logrus"
 )
 

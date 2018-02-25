@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	psmem "github.com/shirou/gopsutil/mem"
+	psmem "github.com/lnquy/gopsutil/mem"
 	"github.com/sirupsen/logrus"
 )
 

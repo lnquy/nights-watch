@@ -38,10 +38,21 @@
   version = "v1.2.1"
 
 [[projects]]
-  name = "github.com/shirou/gopsutil"
+  name = "github.com/lnquy/gopsutil"
   packages = ["cpu","host","internal/common","mem","net","process"]
-  revision = "c432be29ccce470088d07eea25b3ea7e68a8afbb"
-  version = "v2.18.01"
+  revision = "05426d21668bd5974b4e179067540757b5b76b84"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/mindprince/gonvml"
+  packages = ["."]
+  revision = "eea82dc7bb371c99a9f2b991088e267ab473b40a"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/shirou/w32"
+  packages = ["."]
+  revision = "bb4de0191aa41b5507caa14b0650cdbddcd9280b"
 
 [[projects]]
   name = "github.com/sirupsen/logrus"
@@ -59,17 +70,17 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["nacl/secretbox","poly1305","salsa20/salsa","ssh/terminal"]
-  revision = "5119cf507ed5294cc409c092980c7497ee5d6fd2"
+  revision = "49796115aa4b964c318aad4f3084fdb41e9aa067"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix","windows"]
-  revision = "37707fdb30a5b38865cfb95e5aab41707daec7fd"
+  revision = "f6cff0780e542efa0c8e864dc8fa522808f6a598"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "edc5d9c08df6204d4f2727315e7ae68b30e83f67e2d5e6355bbcae4da10d5cbe"
+  inputs-digest = "9c12f65c8a91616f1e6c1ca22bd25b93ba48ee8a00dca25001f6ef9c0b0e0351"
   solver-name = "gps-cdcl"
   solver-version = 1

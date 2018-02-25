@@ -22,8 +22,8 @@
 
 
 [[constraint]]
-  name = "github.com/shirou/gopsutil"
-  version = "2.18.1"
+  name = "github.com/lnquy/gopsutil"
+  revision = "05426d21668bd5974b4e179067540757b5b76b84"
 
 [[constraint]]
   name = "github.com/go-chi/chi"

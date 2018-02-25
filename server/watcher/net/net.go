@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	psnet "github.com/shirou/gopsutil/net"
+	psnet "github.com/lnquy/gopsutil/net"
 	"github.com/sirupsen/logrus"
 )
 
