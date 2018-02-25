@@ -9,7 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (w *watcher) GetStats(ctx context.Context, interval time.Duration) <-chan *Stats {
+func (w *watcher) GetStats(ctx context.Context, interval time.Duration, vendor GPUVendor) <-chan *Stats {
 	ticker := time.NewTicker(interval)
 	statsChan := make(chan *Stats, 10)
 	stats := &Stats{}

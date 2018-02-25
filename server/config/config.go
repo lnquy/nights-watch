@@ -70,6 +70,7 @@ type (
 		Enabled       bool `json:"enabled"`
 		LoadThreshold uint `json:"load"`
 		MemThreshold  uint `json:"mem"`
+		Vendor string `json:"vendor"`
 	}
 
 	Network struct {

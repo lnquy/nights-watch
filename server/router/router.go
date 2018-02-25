@@ -134,7 +134,10 @@ func (rt *Router) watchStats() {
 	rt.sConn.Write([]byte("3|-|-$"))
 	rt.sConn.Write([]byte("z|3|0$"))
 	if rt.cfg.Stats.GPU.Enabled {
-		gw = gpu.NewWatcher().GetStats(rt.ctx, interval)
+		if rt.cfg.Stats.GPU.Vendor == "" || rt.cfg.Stats.GPU.Vendor == string(gpu.NVIDIA) {
+			gw = gpu.NewWatcher().GetStats(rt.ctx, interval, gpu.NVIDIA)
+		}
+		// TODO: Other vendors
 	}
 
 	nw := make(<-chan *net.Stats)
