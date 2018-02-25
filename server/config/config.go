@@ -67,10 +67,10 @@ type (
 	}
 
 	GPU struct {
-		Enabled       bool `json:"enabled"`
-		LoadThreshold uint `json:"load"`
-		MemThreshold  uint `json:"mem"`
-		Vendor string `json:"vendor"`
+		Enabled       bool   `json:"enabled"`
+		LoadThreshold uint   `json:"load"`
+		MemThreshold  uint   `json:"mem"`
+		Vendor        string `json:"vendor"`
 	}
 
 	Network struct {
@@ -96,8 +96,8 @@ func LoadFromFile(fp string) *Config {
 				Baud: 9600,
 			},
 			Sleep: Sleep{
-				Start: "00:00",
-				End:   "00:00",
+				Start:            "00:00",
+				End:              "00:00",
 				NormalBrightness: 85,
 			},
 			Stats: Stats{

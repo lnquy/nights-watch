@@ -399,7 +399,7 @@
       if (obj.hasOwnProperty(key)) {
         if (typeof obj[key] === 'object') {
           forceNumericObject(obj[key]); // Recursive to nested fields
-        } else if (typeof obj[key] === 'string') {
+        } else if (typeof obj[key] === 'string' && key !== 'vendor') { // Omit GPU vendor string
           var num = Number(obj[key]);
           if (num || num === 0) {
             obj[key] = num; // Convert numeric string to numeric
