@@ -5,6 +5,8 @@
 Night's Watch is your system monitor and notifier.  
 [...]
 
+![result.jpg](misc/result.jpg)
+
 ## Setup
 [...]
 
